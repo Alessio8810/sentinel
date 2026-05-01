@@ -497,6 +497,21 @@
       font-size: 0.85rem;
     }
 
+    select.form-input {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b949e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 38px;
+      cursor: pointer;
+    }
+
+    select.form-input option {
+      background: #1c2128;
+      color: #e6edf3;
+    }
+
     /* ─── BUTTONS ─── */
     .btn {
       display: inline-flex;
@@ -696,10 +711,14 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">ID Canale</label>
-          <input class="form-input" type="text" id="welcomeChannel" value="<%= config.welcomeChannel || '' %>"
-            placeholder="Es. 123456789012345678">
-          <div class="form-hint">Copia l'ID tenendo Shift e cliccando sul canale</div>
+          <label class="form-label">Canale benvenuto</label>
+          <select class="form-input" id="welcomeChannel">
+            <option value="">— Nessuno —</option>
+            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%= config.welcomeChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
+            <% }) %>
+          </select>
+          <div class="form-hint">Canale dove verranno inviati i messaggi di benvenuto</div>
         </div>
       </div>
       <div class="form-group">
@@ -733,10 +752,14 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">ID Canale Level-Up</label>
-          <input class="form-input" type="text" id="levelUpChannel" value="<%= config.levelUpChannel || '' %>"
-            placeholder="Es. 123456789012345678">
-          <div class="form-hint">Lascia vuoto per inviare nel canale corrente</div>
+          <label class="form-label">Canale level-up</label>
+          <select class="form-input" id="levelUpChannel">
+            <option value="">— Canale corrente —</option>
+            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%= config.levelUpChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
+            <% }) %>
+          </select>
+          <div class="form-hint">Lascia su "Canale corrente" per inviare dove scrive l'utente</div>
         </div>
       </div>
       <div class="form-group">
@@ -760,10 +783,14 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">ID Canale Mod-Log</label>
-          <input class="form-input" type="text" id="modLogChannel" value="<%= config.modLogChannel || '' %>"
-            placeholder="Es. 123456789012345678">
-          <div class="form-hint">Tutte le azioni di moderazione saranno registrate qui</div>
+          <label class="form-label">Canale mod-log</label>
+          <select class="form-input" id="modLogChannel">
+            <option value="">— Nessuno —</option>
+            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%= config.modLogChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
+            <% }) %>
+          </select>
+          <div class="form-hint">Tutte le azioni di moderazione (ban, kick, mute, warn) saranno registrate qui</div>
         </div>
       </div>
       <button class="btn btn-accent" onclick="save('moderation')"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
@@ -845,9 +872,13 @@
             value="<%= (config.automod && config.automod.emojiLimit) || 10 %>" min="1" max="50">
         </div>
         <div class="form-group">
-          <label class="form-label">ID Canale Log Auto-Mod</label>
-          <input class="form-input" type="text" id="am_logChannel"
-            value="<%= (config.automod && config.automod.logChannel) || '' %>" placeholder="Es. 123456789012345678">
+          <label class="form-label">Canale log auto-mod</label>
+          <select class="form-input" id="am_logChannel">
+            <option value="">— Nessuno —</option>
+            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%= (config.automod && config.automod.logChannel === c.id) ? 'selected' : '' %>># <%= c.name %></option>
+            <% }) %>
+          </select>
         </div>
       </div>
 
@@ -880,15 +911,23 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">ID Canale Musica</label>
-          <input class="form-input" type="text" id="musicChannel" value="<%= config.musicChannel || '' %>"
-            placeholder="Es. 123456789012345678">
+          <label class="form-label">Canale musica</label>
+          <select class="form-input" id="musicChannel">
+            <option value="">— Tutti i canali —</option>
+            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%= config.musicChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
+            <% }) %>
+          </select>
           <div class="form-hint">Il bot risponderà ai comandi musicali solo in questo canale</div>
         </div>
         <div class="form-group">
-          <label class="form-label">ID Ruolo DJ</label>
-          <input class="form-input" type="text" id="djRole" value="<%= config.djRole || '' %>"
-            placeholder="Es. 123456789012345678">
+          <label class="form-label">Ruolo DJ</label>
+          <select class="form-input" id="djRole">
+            <option value="">— Nessuno —</option>
+            <% roles.filter(r => r.name !== '@everyone').forEach(r => { %>
+              <option value="<%= r.id %>" <%= config.djRole === r.id ? 'selected' : '' %>>@ <%= r.name %></option>
+            <% }) %>
+          </select>
           <div class="form-hint">Solo chi ha questo ruolo potrà usare skip/stop/volume</div>
         </div>
       </div>
@@ -917,15 +956,23 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">ID Categoria Ticket</label>
-          <input class="form-input" type="text" id="ticketCategory" value="<%= config.ticketCategory || '' %>"
-            placeholder="Es. 123456789012345678">
+          <label class="form-label">Categoria ticket</label>
+          <select class="form-input" id="ticketCategory">
+            <option value="">— Nessuna —</option>
+            <% channels.filter(c => c.type === 4).forEach(c => { %>
+              <option value="<%= c.id %>" <%= config.ticketCategory === c.id ? 'selected' : '' %>>📂 <%= c.name %></option>
+            <% }) %>
+          </select>
           <div class="form-hint">I canali ticket verranno creati dentro questa categoria</div>
         </div>
         <div class="form-group">
-          <label class="form-label">ID Canale Log Ticket</label>
-          <input class="form-input" type="text" id="ticketLogChannel" value="<%= config.ticketLogChannel || '' %>"
-            placeholder="Es. 123456789012345678">
+          <label class="form-label">Canale log ticket</label>
+          <select class="form-input" id="ticketLogChannel">
+            <option value="">— Nessuno —</option>
+            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%= config.ticketLogChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
+            <% }) %>
+          </select>
           <div class="form-hint">Apertura e chiusura ticket vengono registrate qui</div>
         </div>
       </div>
@@ -1037,14 +1084,12 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Canale notifiche</label>
-        <select id="twitchChannel">
+        <label class="form-label">Canale notifiche</label>
+        <select class="form-input" id="twitchChannel">
           <option value="">— Nessuno —</option>
-          <% channels.filter(c=> c.type === 0).forEach(c => { %>
-            <option value="<%= c.id %>" <%=(config.twitchAlerts && config.twitchAlerts.channelId===c.id) ? 'selected'
-              : '' %>>#<%= c.name %>
-            </option>
-            <% }) %>
+          <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+            <option value="<%= c.id %>" <%= (config.twitchAlerts && config.twitchAlerts.channelId === c.id) ? 'selected' : '' %>># <%= c.name %></option>
+          <% }) %>
         </select>
       </div>
       <div class="form-group">
@@ -1168,14 +1213,12 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Canale notifiche</label>
-        <select id="instagramChannel">
+        <label class="form-label">Canale notifiche</label>
+        <select class="form-input" id="instagramChannel">
           <option value="">— Nessuno —</option>
-          <% channels.filter(c=> c.type === 0).forEach(c => { %>
-            <option value="<%= c.id %>" <%=(config.instagramAlerts && config.instagramAlerts.channelId===c.id)
-              ? 'selected' : '' %>>#<%= c.name %>
-            </option>
-            <% }) %>
+          <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+            <option value="<%= c.id %>" <%= (config.instagramAlerts && config.instagramAlerts.channelId === c.id) ? 'selected' : '' %>># <%= c.name %></option>
+          <% }) %>
         </select>
       </div>
       <div class="form-group">
