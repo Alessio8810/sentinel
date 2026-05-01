@@ -2,12 +2,12 @@ const { Sequelize } = require('sequelize');
 const logger = require('../utils/logger');
 
 const sequelize = new Sequelize(
-  process.env.MYSQL_DB,
-  process.env.MYSQL_USER,
-  process.env.MYSQL_PASSWORD,
+  process.env.MYSQL_DB || process.env.MYSQLDATABASE,
+  process.env.MYSQL_USER || process.env.MYSQLUSER,
+  process.env.MYSQL_PASSWORD || process.env.MYSQLPASSWORD,
   {
-    host: process.env.MYSQL_HOST || 'localhost',
-    port: parseInt(process.env.MYSQL_PORT) || 3306,
+    host: process.env.MYSQL_HOST || process.env.MYSQLHOST || 'localhost',
+    port: parseInt(process.env.MYSQL_PORT || process.env.MYSQLPORT) || 3306,
     dialect: 'mysql',
     logging: false,
   }
