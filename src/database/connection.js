@@ -1,17 +1,22 @@
 const { Sequelize } = require('sequelize');
 const logger = require('../utils/logger');
 
-const sequelize = new Sequelize(
-  process.env.MYSQL_DB || process.env.MYSQLDATABASE,
-  process.env.MYSQL_USER || process.env.MYSQLUSER,
-  process.env.MYSQL_PASSWORD || process.env.MYSQLPASSWORD,
-  {
-    host: process.env.MYSQL_HOST || process.env.MYSQLHOST || 'localhost',
-    port: parseInt(process.env.MYSQL_PORT || process.env.MYSQLPORT) || 3306,
-    dialect: 'mysql',
-    logging: false,
-  }
-);
+// Railway fornisce MYSQL_URL (interno) o MYSQL_PUBLIC_URL (esterno/locale)
+const mysqlUrl = process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
+
+const sequelize = mysqlUrl
+  ? new Sequelize(mysqlUrl, { dialect: 'mysql', logging: false })
+  : new Sequelize(
+      process.env.MYSQL_DB || process.env.MYSQLDATABASE,
+      process.env.MYSQL_USER || process.env.MYSQLUSER,
+      process.env.MYSQL_PASSWORD || process.env.MYSQLPASSWORD,
+      {
+        host: process.env.MYSQL_HOST || process.env.MYSQLHOST || 'localhost',
+        port: parseInt(process.env.MYSQL_PORT || process.env.MYSQLPORT) || 3306,
+        dialect: 'mysql',
+        logging: false,
+      }
+    );
 
 async function connectDB() {
   try {
