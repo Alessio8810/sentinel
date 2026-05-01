@@ -19,7 +19,7 @@ passport.use(new Strategy({
   clientID: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
   callbackURL: process.env.CALLBACK_URL,
-  scope: ['identify', 'guilds'],
+  scope: ['identify', 'guilds', 'guilds.members.read'],
 }, (accessToken, refreshToken, profile, done) => done(null, profile)));
 
 passport.serializeUser((user, done) => done(null, user));
@@ -66,9 +66,17 @@ app.get('/dashboard/:guildId', ensureAuth, async (req, res) => {
     const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
     let channels = [], roles = [];
     try {
-      channels = await rest.get(Routes.guildChannels(req.params.guildId));
-      roles = await rest.get(Routes.guildRoles(req.params.guildId));
-    } catch (e) { console.error('Fetch canali/ruoli errore:', e.message); }
+      // Usa l'access token dell'utente (ha sicuramente accesso al server)
+      const axios = require('axios');
+      const headers = { Authorization: `Bearer ${req.user.accessToken}` };
+      const baseUrl = 'https://discord.com/api/v10';
+      const [chRes, rolesRes] = await Promise.all([
+        axios.get(`${baseUrl}/guilds/${req.params.guildId}/channels`, { headers }),
+        axios.get(`${baseUrl}/guilds/${req.params.guildId}/roles`, { headers }),
+      ]);
+      channels = chRes.data;
+      roles = rolesRes.data;
+    } catch (e) { console.error('Fetch canali/ruoli errore:', e.response?.data?.message || e.message); }
 
     res.render('guild', { user: req.user, guild, config, channels, roles });
   } catch (e) {
