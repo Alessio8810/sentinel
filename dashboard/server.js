@@ -50,8 +50,24 @@ function ensureAuth(req, res, next) {
 // ─── ROUTES ───
 app.get('/', (req, res) => res.render('index', { user: req.user || null }));
 
+// Recupera le guild del bot (cached per 60s)
+let botGuildIds = new Set();
+let botGuildsCachedAt = 0;
+async function getBotGuildIds() {
+  if (Date.now() - botGuildsCachedAt < 60000 && botGuildIds.size > 0) return botGuildIds;
+  try {
+    const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+    const data = await rest.get(Routes.userGuilds());
+    botGuildIds = new Set(data.map(g => g.id));
+    botGuildsCachedAt = Date.now();
+  } catch (e) { console.error('Errore fetch guild bot:', e.message); }
+  return botGuildIds;
+}
+
 app.get('/dashboard', ensureAuth, async (req, res) => {
-  const guilds = req.user.guilds.filter(g => (BigInt(g.permissions) & BigInt(0x20)) === BigInt(0x20));
+  const adminGuilds = req.user.guilds.filter(g => (BigInt(g.permissions) & BigInt(0x20)) === BigInt(0x20));
+  const ids = await getBotGuildIds();
+  const guilds = adminGuilds.filter(g => ids.has(g.id));
   res.render('dashboard', { user: req.user, guilds });
 });
 
@@ -62,21 +78,17 @@ app.get('/dashboard/:guildId', ensureAuth, async (req, res) => {
 
     let [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
 
-    // Fetch canali e ruoli del server tramite Discord API
+    // Fetch canali e ruoli tramite bot token
     const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
     let channels = [], roles = [];
     try {
-      // Usa l'access token dell'utente (ha sicuramente accesso al server)
-      const axios = require('axios');
-      const headers = { Authorization: `Bearer ${req.user.accessToken}` };
-      const baseUrl = 'https://discord.com/api/v10';
-      const [chRes, rolesRes] = await Promise.all([
-        axios.get(`${baseUrl}/guilds/${req.params.guildId}/channels`, { headers }),
-        axios.get(`${baseUrl}/guilds/${req.params.guildId}/roles`, { headers }),
+      const [ch, ro] = await Promise.all([
+        rest.get(Routes.guildChannels(req.params.guildId)),
+        rest.get(Routes.guildRoles(req.params.guildId)),
       ]);
-      channels = chRes.data;
-      roles = rolesRes.data;
-    } catch (e) { console.error('Fetch canali/ruoli errore:', e.response?.data?.message || e.message); }
+      channels = ch;
+      roles = ro;
+    } catch (e) { console.error('Fetch canali/ruoli errore:', e.message); }
 
     res.render('guild', { user: req.user, guild, config, channels, roles });
   } catch (e) {
