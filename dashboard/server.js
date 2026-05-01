@@ -48,7 +48,7 @@ function ensureAuth(req, res, next) {
 }
 
 // ─── ROUTES ───
-app.get('/', (req, res) => res.render('index', { user: req.user || null }));
+app.get('/', (req, res) => res.render('index', { user: req.user || null, clientId: process.env.CLIENT_ID }));
 
 // Recupera le guild del bot (cached per 60s)
 let botGuildIds = new Set();
