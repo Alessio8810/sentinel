@@ -13,7 +13,7 @@ async function launchBrowser() {
     const puppeteer = require('puppeteer-extra');
     const StealthPlugin = require('puppeteer-extra-plugin-stealth');
     puppeteer.use(StealthPlugin());
-    return puppeteer.launch({
+    const launchOptions = {
         headless: true,
         args: [
             '--no-sandbox',
@@ -22,9 +22,14 @@ async function launchBrowser() {
             '--disable-gpu',
             '--disable-extensions',
             '--disable-background-networking',
-            '--single-process', // riduce RAM su container
+            '--single-process',
         ],
-    });
+    };
+    // Su Railway/Linux usa Chromium di sistema per evitare download 300MB
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+    return puppeteer.launch(launchOptions);
 }
 
 // ── TWITCH ────────────────────────────────────────────────────────────────────
