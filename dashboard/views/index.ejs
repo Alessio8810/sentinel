@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Bot — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --accent: #5865F2;
+      --accent-hover: #4752C4;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-brand .bot-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all .2s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-accent:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(88, 101, 242, .4);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      background: var(--surface);
+    }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 100px 20px 80px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(88, 101, 242, .15) 0%, transparent 70%);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      color: var(--green);
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .stats {
+      display: flex;
+      gap: 48px;
+      justify-content: center;
+      margin-top: 60px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* FEATURES */
+    .features-section {
+      padding: 80px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 48px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all .25s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(88, 101, 242, .15);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <a href="/" class="nav-brand">
+      <div class="bot-icon">🤖</div>
+      Discord Bot
+    </a>
+    <div class="nav-actions">
+      <% if (user) { %>
+        <a href="/dashboard" class="btn btn-accent"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } else { %>
+          <a href="/auth/discord" class="btn btn-accent"><i class="fa-brands fa-discord"></i> Accedi con Discord</a>
+          <% } %>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-badge"><span class="dot"></span> Online e operativo</div>
+    <h1>Il bot Discord<br><span>All-in-One</span> per il tuo server</h1>
+    <p>Moderazione avanzata, sistema livelli, musica, giveaway e molto altro — tutto configurabile dalla dashboard web.
+    </p>
+    <div class="hero-actions">
+      <a href="/auth/discord" class="btn btn-accent" style="font-size:1rem;padding:12px 28px;"><i
+          class="fa-brands fa-discord"></i> Aggiungi al server</a>
+      <a href="/auth/discord" class="btn btn-outline" style="font-size:1rem;padding:12px 28px;"><i
+          class="fa-solid fa-gauge"></i> Apri Dashboard</a>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">27</div>
+        <div class="stat-label">Comandi slash</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">6</div>
+        <div class="stat-label">Categorie</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Open source</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features-section">
+    <div class="section-label">Funzionalità</div>
+    <div class="section-title">Tutto ciò di cui hai bisogno</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(248,81,73,.15);color:#f85149;">🛡️</div>
+        <h3>Moderazione</h3>
+        <p>Ban, kick, mute temporanei, warn, purge messaggi e log moderazione completo.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(88,101,242,.15);color:#5865F2;">🤖</div>
+        <h3>Auto-Mod</h3>
+        <p>Filtro anti-spam, anti-invite, anti-caps, parole bannate con azioni automatiche.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(255,184,0,.15);color:#ffb800;">⭐</div>
+        <h3>Livelli XP</h3>
+        <p>Sistema XP con rank card personalizzate, classifica e moltiplicatori per ruolo.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(63,185,80,.15);color:#3fb950;">🎵</div>
+        <h3>Musica</h3>
+        <p>Riproduzione da YouTube, Spotify e SoundCloud con coda, loop e controllo volume.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(167,139,250,.15);color:#a78bfa;">🎉</div>
+        <h3>Giveaway</h3>
+        <p>Giveaway con durata, numero di vincitori ed estrazione automatica.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(56,189,248,.15);color:#38bdf8;">🎭</div>
+        <h3>Reaction Roles</h3>
+        <p>Assegnazione ruoli tramite reazioni, modalità unica e invertita supportate.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>© 2026 Discord Bot — Tutti i diritti riservati</footer>
+</body>
+
+</html>
