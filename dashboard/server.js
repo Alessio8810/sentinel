@@ -68,7 +68,7 @@ app.get('/dashboard/:guildId', ensureAuth, async (req, res) => {
     try {
       channels = await rest.get(Routes.guildChannels(req.params.guildId));
       roles = await rest.get(Routes.guildRoles(req.params.guildId));
-    } catch (e) { /* il bot potrebbe non essere nel server */ }
+    } catch (e) { console.error('Fetch canali/ruoli errore:', e.message); }
 
     res.render('guild', { user: req.user, guild, config, channels, roles });
   } catch (e) {
