@@ -583,6 +583,138 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* ─── PLUGIN GRID ─── */
+    .plugins-overview {
+      margin-bottom: 48px;
+    }
+
+    .plugins-overview-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .plugin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .plugin-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color .2s, transform .15s, box-shadow .2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .plugin-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(88,101,242,.12);
+    }
+
+    .plugin-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .plugin-card-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .plugin-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+
+    .plugin-status.active {
+      background: rgba(63, 185, 80, .15);
+      color: var(--green);
+    }
+
+    .plugin-status.inactive {
+      background: rgba(139, 148, 158, .1);
+      color: var(--muted);
+    }
+
+    .plugin-status .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .plugin-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .plugin-card-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .plugin-card-footer {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .plugin-config-btn {
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      transition: gap .15s;
+    }
+
+    .plugin-card:hover .plugin-config-btn {
+      gap: 8px;
+    }
+
+    /* ─── SIDEBAR STATUS DOTS ─── */
+    .nav-link .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-left: auto;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 
@@ -613,45 +745,58 @@
       </a>
       <a href="#welcome" class="nav-link">
         <span class="icon"><i class="fa-solid fa-hand-wave"></i></span> Benvenuto
+        <% if (config.welcomeEnabled) { %><span class="status-dot"></span><% } %>
       </a>
 
       <div class="nav-section-label" style="margin-top:8px;">Livelli</div>
       <a href="#levels" class="nav-link">
         <span class="icon"><i class="fa-solid fa-star"></i></span> Livelli XP
+        <% if (config.levelsEnabled) { %><span class="status-dot"></span><% } %>
       </a>
 
       <div class="nav-section-label" style="margin-top:8px;">Moderazione</div>
       <a href="#moderation" class="nav-link">
         <span class="icon"><i class="fa-solid fa-shield-halved"></i></span> Mod Log
+        <% if (config.modLogChannel) { %><span class="status-dot"></span><% } %>
       </a>
       <a href="#automod" class="nav-link">
         <span class="icon"><i class="fa-solid fa-robot"></i></span> Auto-Mod
+        <% if (config.automod && config.automod.enabled) { %><span class="status-dot"></span><% } %>
       </a>
 
       <div class="nav-section-label" style="margin-top:8px;">Funzionalità</div>
       <a href="#music" class="nav-link">
         <span class="icon"><i class="fa-solid fa-music"></i></span> Musica
+        <% if (config.musicChannel) { %><span class="status-dot"></span><% } %>
       </a>
       <a href="#tickets" class="nav-link">
         <span class="icon"><i class="fa-solid fa-ticket"></i></span> Ticket
+        <% if (config.ticketsEnabled) { %><span class="status-dot"></span><% } %>
       </a>
       <a href="#reactionroles" class="nav-link">
         <span class="icon"><i class="fa-solid fa-face-smile"></i></span> Reaction Roles
+        <% if ((config.reactionRoles||[]).length>0) { %><span class="status-dot"></span><% } %>
       </a>
       <a href="#botpersonalization" class="nav-link">
         <span class="icon"><i class="fa-solid fa-palette"></i></span> Personalizzazione
       </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">Social</div>
       <a href="#twitch" class="nav-link">
         <span class="icon"><i class="fa-brands fa-twitch"></i></span> Twitch
+        <% if (config.twitchAlerts && config.twitchAlerts.streamers && config.twitchAlerts.streamers.length>0) { %><span class="status-dot"></span><% } %>
       </a>
       <a href="#tiktok" class="nav-link">
         <span class="icon"><i class="fa-brands fa-tiktok"></i></span> TikTok
+        <% if (config.tiktokAlerts && config.tiktokAlerts.users && config.tiktokAlerts.users.length>0) { %><span class="status-dot"></span><% } %>
       </a>
       <a href="#instagram" class="nav-link">
         <span class="icon"><i class="fa-brands fa-instagram"></i></span> Instagram
+        <% if (config.instagramAlerts && config.instagramAlerts.users && config.instagramAlerts.users.length>0) { %><span class="status-dot"></span><% } %>
       </a>
       <a href="#customcmds" class="nav-link">
         <span class="icon"><i class="fa-solid fa-terminal"></i></span> Comandi Custom
+        <% if ((config.customCommands||[]).length>0) { %><span class="status-dot"></span><% } %>
       </a>
     </nav>
 
@@ -664,9 +809,58 @@
 
   <!-- MAIN CONTENT -->
   <main class="main">
-    <div class="page-title">⚙️ <%= guild.name %>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:6px;">
+      <% if (guild.icon) { %>
+        <img src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>.png" style="width:52px;height:52px;border-radius:14px;border:2px solid var(--border);" alt="">
+      <% } else { %>
+        <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;"><%= guild.name[0] %></div>
+      <% } %>
+      <div>
+        <div class="page-title" style="margin-bottom:2px;"><%= guild.name %></div>
+        <div class="page-sub" style="margin-bottom:0;">Configura le funzionalità del bot per questo server</div>
+      </div>
     </div>
-    <div class="page-sub">Configura le funzionalità del bot per questo server</div>
+
+    <!-- ── PLUGIN OVERVIEW ── -->
+    <div class="plugins-overview">
+      <div class="plugins-overview-title">Tutti i Plugin</div>
+      <div class="plugin-grid">
+        <%
+          const pluginList = [
+            { id: 'welcome',         brand: false, icon: 'fa-hand-wave',    color: 'rgba(56,189,248,.15)',   iconColor: '#38bdf8', title: 'Benvenuto',        desc: 'Invia messaggi automatici ai nuovi membri del server',         active: !!config.welcomeEnabled },
+            { id: 'levels',          brand: false, icon: 'fa-star',         color: 'rgba(255,184,0,.15)',    iconColor: '#ffb800', title: 'Livelli XP',       desc: 'Premia i membri più attivi con punti e level-up',               active: !!config.levelsEnabled },
+            { id: 'moderation',      brand: false, icon: 'fa-shield-halved',color: 'rgba(248,81,73,.15)',    iconColor: '#f85149', title: 'Mod Log',          desc: 'Registro completo di ban, kick, mute e warning',               active: !!config.modLogChannel },
+            { id: 'automod',         brand: false, icon: 'fa-robot',        color: 'rgba(88,101,242,.15)',   iconColor: '#5865F2', title: 'Auto-Mod',         desc: 'Filtri automatici per spam, link e parole vietate',            active: !!(config.automod && config.automod.enabled) },
+            { id: 'music',           brand: false, icon: 'fa-music',        color: 'rgba(63,185,80,.15)',    iconColor: '#3fb950', title: 'Musica',           desc: 'Riproduci musica nei canali vocali con comandi slash',          active: !!config.musicChannel },
+            { id: 'tickets',         brand: false, icon: 'fa-ticket',       color: 'rgba(167,139,250,.15)',  iconColor: '#a78bfa', title: 'Ticket',           desc: 'Canali privati di supporto creati dai membri',                 active: !!config.ticketsEnabled },
+            { id: 'reactionroles',   brand: false, icon: 'fa-face-smile',   color: 'rgba(253,186,116,.15)',  iconColor: '#fb923c', title: 'Reaction Roles',   desc: 'Permetti ai membri di ottenere ruoli tramite reazioni emoji',   active: (config.reactionRoles||[]).length > 0 },
+            { id: 'botpersonalization',brand:false, icon: 'fa-palette',     color: 'rgba(251,146,60,.15)',   iconColor: '#fb923c', title: 'Personalizzazione',desc: 'Nickname, avatar e stato del bot su questo server',             active: false },
+            { id: 'twitch',          brand: true,  icon: 'fa-twitch',       color: 'rgba(145,70,255,.15)',   iconColor: '#9146ff', title: 'Twitch',           desc: 'Notifiche live quando i tuoi streamer iniziano in diretta',     active: !!(config.twitchAlerts && config.twitchAlerts.streamers && config.twitchAlerts.streamers.length>0) },
+            { id: 'tiktok',          brand: true,  icon: 'fa-tiktok',       color: 'rgba(255,255,255,.07)',  iconColor: '#e6edf3', title: 'TikTok',           desc: 'Notifiche per i nuovi video dei creator TikTok',               active: !!(config.tiktokAlerts && config.tiktokAlerts.users && config.tiktokAlerts.users.length>0) },
+            { id: 'instagram',       brand: true,  icon: 'fa-instagram',    color: 'rgba(225,48,108,.15)',   iconColor: '#e1306c', title: 'Instagram',        desc: 'Notifiche per i nuovi post degli account Instagram',           active: !!(config.instagramAlerts && config.instagramAlerts.users && config.instagramAlerts.users.length>0) },
+            { id: 'customcmds',      brand: false, icon: 'fa-terminal',     color: 'rgba(52,211,153,.15)',   iconColor: '#34d399', title: 'Comandi Custom',   desc: 'Crea i tuoi comandi slash con risposte personalizzate',         active: (config.customCommands||[]).length > 0 },
+          ];
+        %>
+        <% pluginList.forEach(p => { %>
+          <a href="#<%= p.id %>" class="plugin-card">
+            <div class="plugin-card-top">
+              <div class="plugin-card-icon" style="background:<%= p.color %>;color:<%= p.iconColor %>;">
+                <i class="fa-<%= p.brand ? 'brands' : 'solid' %> <%= p.icon %>"></i>
+              </div>
+              <span class="plugin-status <%= p.active ? 'active' : 'inactive' %>">
+                <span class="dot"></span>
+                <%= p.active ? 'Attivo' : 'Inattivo' %>
+              </span>
+            </div>
+            <div class="plugin-card-title"><%= p.title %></div>
+            <div class="plugin-card-desc"><%= p.desc %></div>
+            <div class="plugin-card-footer">
+              <span class="plugin-config-btn">Configura <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </div>
 
     <!-- ── IMPOSTAZIONI GENERALI ── -->
     <div class="card" id="general">
