@@ -18,8 +18,7 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
     await interaction.deferReply({ ephemeral: true });
 
-    const guildConfig = await Guild.findOne({ where: { guildId: interaction.guild.id } });
-    if (!guildConfig) return interaction.editReply({ content: '❌ Configurazione server non trovata.' });
+    const [guildConfig] = await Guild.findOrCreate({ where: { guildId: interaction.guild.id } });
 
     const subscribers = Array.isArray(guildConfig.scheduleSubscribers) ? [...guildConfig.scheduleSubscribers] : [];
     const userId = interaction.user.id;

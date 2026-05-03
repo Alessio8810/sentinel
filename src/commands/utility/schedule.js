@@ -46,8 +46,7 @@ module.exports = {
     const sub = interaction.options.getSubcommand();
     await interaction.deferReply({ ephemeral: sub !== 'list' });
 
-    const guildConfig = await Guild.findOne({ where: { guildId: interaction.guild.id } });
-    if (!guildConfig) return interaction.editReply({ content: '❌ Configurazione server non trovata.' });
+    const [guildConfig] = await Guild.findOrCreate({ where: { guildId: interaction.guild.id } });
 
     const schedule = Array.isArray(guildConfig.liveSchedule) ? [...guildConfig.liveSchedule] : [];
 

@@ -34,12 +34,14 @@ module.exports = {
       logger.error(`Errore eseguendo /${interaction.commandName}: ${err}`);
       try {
         const reply = { embeds: [errorEmbed('Si è verificato un errore durante l\'esecuzione del comando.')], flags: 64 };
-        if (interaction.replied || interaction.deferred) {
+        if (interaction.deferred && !interaction.replied) {
+          await interaction.editReply(reply);
+        } else if (interaction.replied) {
           await interaction.followUp(reply);
         } else {
           await interaction.reply(reply);
         }
-      } catch { /* interaction scaduta o già risposta da altra istanza */ }
+      } catch { /* interaction scaduta */ }
     }
   },
 };
