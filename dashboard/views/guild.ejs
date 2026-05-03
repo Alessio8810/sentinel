@@ -620,7 +620,7 @@
     .plugin-card:hover {
       border-color: var(--accent);
       transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(88,101,242,.12);
+      box-shadow: 0 6px 24px rgba(88, 101, 242, .12);
     }
 
     .plugin-card-top {
@@ -745,37 +745,44 @@
       </a>
       <a href="#welcome" class="nav-link">
         <span class="icon"><i class="fa-solid fa-hand-wave"></i></span> Benvenuto
-        <% if (config.welcomeEnabled) { %><span class="status-dot"></span><% } %>
+        <% if (config.welcomeEnabled) { %><span class="status-dot"></span>
+          <% } %>
       </a>
 
       <div class="nav-section-label" style="margin-top:8px;">Livelli</div>
       <a href="#levels" class="nav-link">
         <span class="icon"><i class="fa-solid fa-star"></i></span> Livelli XP
-        <% if (config.levelsEnabled) { %><span class="status-dot"></span><% } %>
+        <% if (config.levelsEnabled) { %><span class="status-dot"></span>
+          <% } %>
       </a>
 
       <div class="nav-section-label" style="margin-top:8px;">Moderazione</div>
       <a href="#moderation" class="nav-link">
         <span class="icon"><i class="fa-solid fa-shield-halved"></i></span> Mod Log
-        <% if (config.modLogChannel) { %><span class="status-dot"></span><% } %>
+        <% if (config.modLogChannel) { %><span class="status-dot"></span>
+          <% } %>
       </a>
       <a href="#automod" class="nav-link">
         <span class="icon"><i class="fa-solid fa-robot"></i></span> Auto-Mod
-        <% if (config.automod && config.automod.enabled) { %><span class="status-dot"></span><% } %>
+        <% if (config.automod && config.automod.enabled) { %><span class="status-dot"></span>
+          <% } %>
       </a>
 
       <div class="nav-section-label" style="margin-top:8px;">Funzionalità</div>
       <a href="#music" class="nav-link">
         <span class="icon"><i class="fa-solid fa-music"></i></span> Musica
-        <% if (config.musicChannel) { %><span class="status-dot"></span><% } %>
+        <% if (config.musicChannel) { %><span class="status-dot"></span>
+          <% } %>
       </a>
       <a href="#tickets" class="nav-link">
         <span class="icon"><i class="fa-solid fa-ticket"></i></span> Ticket
-        <% if (config.ticketsEnabled) { %><span class="status-dot"></span><% } %>
+        <% if (config.ticketsEnabled) { %><span class="status-dot"></span>
+          <% } %>
       </a>
       <a href="#reactionroles" class="nav-link">
         <span class="icon"><i class="fa-solid fa-face-smile"></i></span> Reaction Roles
-        <% if ((config.reactionRoles||[]).length>0) { %><span class="status-dot"></span><% } %>
+        <% if ((config.reactionRoles||[]).length>0) { %><span class="status-dot"></span>
+          <% } %>
       </a>
       <a href="#botpersonalization" class="nav-link">
         <span class="icon"><i class="fa-solid fa-palette"></i></span> Personalizzazione
@@ -784,19 +791,26 @@
       <div class="nav-section-label" style="margin-top:8px;">Social</div>
       <a href="#twitch" class="nav-link">
         <span class="icon"><i class="fa-brands fa-twitch"></i></span> Twitch
-        <% if (config.twitchAlerts && config.twitchAlerts.streamers && config.twitchAlerts.streamers.length>0) { %><span class="status-dot"></span><% } %>
+        <% if (config.twitchAlerts && config.twitchAlerts.streamers && config.twitchAlerts.streamers.length>0) { %><span
+            class="status-dot"></span>
+          <% } %>
       </a>
       <a href="#tiktok" class="nav-link">
         <span class="icon"><i class="fa-brands fa-tiktok"></i></span> TikTok
-        <% if (config.tiktokAlerts && config.tiktokAlerts.users && config.tiktokAlerts.users.length>0) { %><span class="status-dot"></span><% } %>
+        <% if (config.tiktokAlerts && config.tiktokAlerts.users && config.tiktokAlerts.users.length>0) { %><span
+            class="status-dot"></span>
+          <% } %>
       </a>
       <a href="#instagram" class="nav-link">
         <span class="icon"><i class="fa-brands fa-instagram"></i></span> Instagram
-        <% if (config.instagramAlerts && config.instagramAlerts.users && config.instagramAlerts.users.length>0) { %><span class="status-dot"></span><% } %>
+        <% if (config.instagramAlerts && config.instagramAlerts.users && config.instagramAlerts.users.length>0) {
+          %><span class="status-dot"></span>
+          <% } %>
       </a>
       <a href="#customcmds" class="nav-link">
         <span class="icon"><i class="fa-solid fa-terminal"></i></span> Comandi Custom
-        <% if ((config.customCommands||[]).length>0) { %><span class="status-dot"></span><% } %>
+        <% if ((config.customCommands||[]).length>0) { %><span class="status-dot"></span>
+          <% } %>
       </a>
     </nav>
 
@@ -811,54 +825,83 @@
   <main class="main">
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:6px;">
       <% if (guild.icon) { %>
-        <img src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>.png" style="width:52px;height:52px;border-radius:14px;border:2px solid var(--border);" alt="">
-      <% } else { %>
-        <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;"><%= guild.name[0] %></div>
-      <% } %>
-      <div>
-        <div class="page-title" style="margin-bottom:2px;"><%= guild.name %></div>
-        <div class="page-sub" style="margin-bottom:0;">Configura le funzionalità del bot per questo server</div>
-      </div>
+        <img src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>.png"
+          style="width:52px;height:52px;border-radius:14px;border:2px solid var(--border);" alt="">
+        <% } else { %>
+          <div
+            style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;">
+            <%= guild.name[0] %>
+          </div>
+          <% } %>
+            <div>
+              <div class="page-title" style="margin-bottom:2px;">
+                <%= guild.name %>
+              </div>
+              <div class="page-sub" style="margin-bottom:0;">Configura le funzionalità del bot per questo server</div>
+            </div>
     </div>
 
     <!-- ── PLUGIN OVERVIEW ── -->
     <div class="plugins-overview">
       <div class="plugins-overview-title">Tutti i Plugin</div>
       <div class="plugin-grid">
-        <%
-          const pluginList = [
-            { id: 'welcome',         brand: false, icon: 'fa-hand-wave',    color: 'rgba(56,189,248,.15)',   iconColor: '#38bdf8', title: 'Benvenuto',        desc: 'Invia messaggi automatici ai nuovi membri del server',         active: !!config.welcomeEnabled },
-            { id: 'levels',          brand: false, icon: 'fa-star',         color: 'rgba(255,184,0,.15)',    iconColor: '#ffb800', title: 'Livelli XP',       desc: 'Premia i membri più attivi con punti e level-up',               active: !!config.levelsEnabled },
-            { id: 'moderation',      brand: false, icon: 'fa-shield-halved',color: 'rgba(248,81,73,.15)',    iconColor: '#f85149', title: 'Mod Log',          desc: 'Registro completo di ban, kick, mute e warning',               active: !!config.modLogChannel },
-            { id: 'automod',         brand: false, icon: 'fa-robot',        color: 'rgba(88,101,242,.15)',   iconColor: '#5865F2', title: 'Auto-Mod',         desc: 'Filtri automatici per spam, link e parole vietate',            active: !!(config.automod && config.automod.enabled) },
-            { id: 'music',           brand: false, icon: 'fa-music',        color: 'rgba(63,185,80,.15)',    iconColor: '#3fb950', title: 'Musica',           desc: 'Riproduci musica nei canali vocali con comandi slash',          active: !!config.musicChannel },
-            { id: 'tickets',         brand: false, icon: 'fa-ticket',       color: 'rgba(167,139,250,.15)',  iconColor: '#a78bfa', title: 'Ticket',           desc: 'Canali privati di supporto creati dai membri',                 active: !!config.ticketsEnabled },
-            { id: 'reactionroles',   brand: false, icon: 'fa-face-smile',   color: 'rgba(253,186,116,.15)',  iconColor: '#fb923c', title: 'Reaction Roles',   desc: 'Permetti ai membri di ottenere ruoli tramite reazioni emoji',   active: (config.reactionRoles||[]).length > 0 },
-            { id: 'botpersonalization',brand:false, icon: 'fa-palette',     color: 'rgba(251,146,60,.15)',   iconColor: '#fb923c', title: 'Personalizzazione',desc: 'Nickname, avatar e stato del bot su questo server',             active: false },
-            { id: 'twitch',          brand: true,  icon: 'fa-twitch',       color: 'rgba(145,70,255,.15)',   iconColor: '#9146ff', title: 'Twitch',           desc: 'Notifiche live quando i tuoi streamer iniziano in diretta',     active: !!(config.twitchAlerts && config.twitchAlerts.streamers && config.twitchAlerts.streamers.length>0) },
-            { id: 'tiktok',          brand: true,  icon: 'fa-tiktok',       color: 'rgba(255,255,255,.07)',  iconColor: '#e6edf3', title: 'TikTok',           desc: 'Notifiche per i nuovi video dei creator TikTok',               active: !!(config.tiktokAlerts && config.tiktokAlerts.users && config.tiktokAlerts.users.length>0) },
-            { id: 'instagram',       brand: true,  icon: 'fa-instagram',    color: 'rgba(225,48,108,.15)',   iconColor: '#e1306c', title: 'Instagram',        desc: 'Notifiche per i nuovi post degli account Instagram',           active: !!(config.instagramAlerts && config.instagramAlerts.users && config.instagramAlerts.users.length>0) },
-            { id: 'customcmds',      brand: false, icon: 'fa-terminal',     color: 'rgba(52,211,153,.15)',   iconColor: '#34d399', title: 'Comandi Custom',   desc: 'Crea i tuoi comandi slash con risposte personalizzate',         active: (config.customCommands||[]).length > 0 },
+        <% const pluginList=[ { id: 'welcome' , brand: false, icon: 'fa-hand-wave' , color: 'rgba(56,189,248,.15)' ,
+          iconColor: '#38bdf8' , title: 'Benvenuto' , desc: 'Invia messaggi automatici ai nuovi membri del server' ,
+          active: !!config.welcomeEnabled }, { id: 'levels' , brand: false, icon: 'fa-star' ,
+          color: 'rgba(255,184,0,.15)' , iconColor: '#ffb800' , title: 'Livelli XP' ,
+          desc: 'Premia i membri più attivi con punti e level-up' , active: !!config.levelsEnabled }, { id: 'moderation'
+          , brand: false, icon: 'fa-shield-halved' ,color: 'rgba(248,81,73,.15)' , iconColor: '#f85149' ,
+          title: 'Mod Log' , desc: 'Registro completo di ban, kick, mute e warning' , active: !!config.modLogChannel },
+          { id: 'automod' , brand: false, icon: 'fa-robot' , color: 'rgba(88,101,242,.15)' , iconColor: '#5865F2' ,
+          title: 'Auto-Mod' , desc: 'Filtri automatici per spam, link e parole vietate' , active: !!(config.automod &&
+          config.automod.enabled) }, { id: 'music' , brand: false, icon: 'fa-music' , color: 'rgba(63,185,80,.15)' ,
+          iconColor: '#3fb950' , title: 'Musica' , desc: 'Riproduci musica nei canali vocali con comandi slash' ,
+          active: !!config.musicChannel }, { id: 'tickets' , brand: false, icon: 'fa-ticket' ,
+          color: 'rgba(167,139,250,.15)' , iconColor: '#a78bfa' , title: 'Ticket' ,
+          desc: 'Canali privati di supporto creati dai membri' , active: !!config.ticketsEnabled }, {
+          id: 'reactionroles' , brand: false, icon: 'fa-face-smile' , color: 'rgba(253,186,116,.15)' ,
+          iconColor: '#fb923c' , title: 'Reaction Roles' ,
+          desc: 'Permetti ai membri di ottenere ruoli tramite reazioni emoji' , active:
+          (config.reactionRoles||[]).length> 0 },
+          { id: 'botpersonalization',brand:false, icon: 'fa-palette', color: 'rgba(251,146,60,.15)', iconColor:
+          '#fb923c', title: 'Personalizzazione',desc: 'Nickname, avatar e stato del bot su questo server', active: false
+          },
+          { id: 'twitch', brand: true, icon: 'fa-twitch', color: 'rgba(145,70,255,.15)', iconColor: '#9146ff', title:
+          'Twitch', desc: 'Notifiche live quando i tuoi streamer iniziano in diretta', active: !!(config.twitchAlerts &&
+          config.twitchAlerts.streamers && config.twitchAlerts.streamers.length>0) },
+          { id: 'tiktok', brand: true, icon: 'fa-tiktok', color: 'rgba(255,255,255,.07)', iconColor: '#e6edf3', title:
+          'TikTok', desc: 'Notifiche per i nuovi video dei creator TikTok', active: !!(config.tiktokAlerts &&
+          config.tiktokAlerts.users && config.tiktokAlerts.users.length>0) },
+          { id: 'instagram', brand: true, icon: 'fa-instagram', color: 'rgba(225,48,108,.15)', iconColor: '#e1306c',
+          title: 'Instagram', desc: 'Notifiche per i nuovi post degli account Instagram', active:
+          !!(config.instagramAlerts && config.instagramAlerts.users && config.instagramAlerts.users.length>0) },
+          { id: 'customcmds', brand: false, icon: 'fa-terminal', color: 'rgba(52,211,153,.15)', iconColor: '#34d399',
+          title: 'Comandi Custom', desc: 'Crea i tuoi comandi slash con risposte personalizzate', active:
+          (config.customCommands||[]).length > 0 },
           ];
-        %>
-        <% pluginList.forEach(p => { %>
-          <a href="#<%= p.id %>" class="plugin-card">
-            <div class="plugin-card-top">
-              <div class="plugin-card-icon" style="background:<%= p.color %>;color:<%= p.iconColor %>;">
-                <i class="fa-<%= p.brand ? 'brands' : 'solid' %> <%= p.icon %>"></i>
+          %>
+          <% pluginList.forEach(p=> { %>
+            <a href="#<%= p.id %>" class="plugin-card">
+              <div class="plugin-card-top">
+                <div class="plugin-card-icon" style="background:<%= p.color %>;color:<%= p.iconColor %>;">
+                  <i class="fa-<%= p.brand ? 'brands' : 'solid' %> <%= p.icon %>"></i>
+                </div>
+                <span class="plugin-status <%= p.active ? 'active' : 'inactive' %>">
+                  <span class="dot"></span>
+                  <%= p.active ? 'Attivo' : 'Inattivo' %>
+                </span>
               </div>
-              <span class="plugin-status <%= p.active ? 'active' : 'inactive' %>">
-                <span class="dot"></span>
-                <%= p.active ? 'Attivo' : 'Inattivo' %>
-              </span>
-            </div>
-            <div class="plugin-card-title"><%= p.title %></div>
-            <div class="plugin-card-desc"><%= p.desc %></div>
-            <div class="plugin-card-footer">
-              <span class="plugin-config-btn">Configura <i class="fa-solid fa-arrow-right"></i></span>
-            </div>
-          </a>
-        <% }) %>
+              <div class="plugin-card-title">
+                <%= p.title %>
+              </div>
+              <div class="plugin-card-desc">
+                <%= p.desc %>
+              </div>
+              <div class="plugin-card-footer">
+                <span class="plugin-config-btn">Configura <i class="fa-solid fa-arrow-right"></i></span>
+              </div>
+            </a>
+            <% }) %>
       </div>
     </div>
 
@@ -908,9 +951,10 @@
           <label class="form-label">Canale benvenuto</label>
           <select class="form-input" id="welcomeChannel">
             <option value="">— Nessuno —</option>
-            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
-              <option value="<%= c.id %>" <%= config.welcomeChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
-            <% }) %>
+            <% channels.filter(c=> c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%=config.welcomeChannel===c.id ? 'selected' : '' %>># <%= c.name %>
+              </option>
+              <% }) %>
           </select>
           <div class="form-hint">Canale dove verranno inviati i messaggi di benvenuto</div>
         </div>
@@ -949,9 +993,10 @@
           <label class="form-label">Canale level-up</label>
           <select class="form-input" id="levelUpChannel">
             <option value="">— Canale corrente —</option>
-            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
-              <option value="<%= c.id %>" <%= config.levelUpChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
-            <% }) %>
+            <% channels.filter(c=> c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%=config.levelUpChannel===c.id ? 'selected' : '' %>># <%= c.name %>
+              </option>
+              <% }) %>
           </select>
           <div class="form-hint">Lascia su "Canale corrente" per inviare dove scrive l'utente</div>
         </div>
@@ -980,14 +1025,70 @@
           <label class="form-label">Canale mod-log</label>
           <select class="form-input" id="modLogChannel">
             <option value="">— Nessuno —</option>
-            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
-              <option value="<%= c.id %>" <%= config.modLogChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
-            <% }) %>
+            <% channels.filter(c=> c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%=config.modLogChannel===c.id ? 'selected' : '' %>># <%= c.name %>
+              </option>
+              <% }) %>
           </select>
           <div class="form-hint">Tutte le azioni di moderazione (ban, kick, mute, warn) saranno registrate qui</div>
         </div>
       </div>
       <button class="btn btn-accent" onclick="save('moderation')"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
+
+      <!-- Comandi disponibili -->
+      <div style="margin-top:28px;padding-top:24px;border-top:1px solid var(--border);">
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Comandi disponibili</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <code style="background:rgba(88,101,242,.15);color:#a5b4fc;padding:2px 8px;border-radius:5px;font-size:0.82rem;font-weight:700;">/ban</code>
+              <span style="font-size:0.7rem;background:rgba(248,81,73,.12);color:#f85149;padding:2px 7px;border-radius:99px;font-weight:600;">ADMIN</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">Banna un utente dal server con motivo opzionale. Il ban viene registrato nel mod-log.</div>
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--muted);opacity:.7;">Opzioni: <code style="font-size:0.75rem;">utente</code> · <code style="font-size:0.75rem;">motivo</code></div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <code style="background:rgba(88,101,242,.15);color:#a5b4fc;padding:2px 8px;border-radius:5px;font-size:0.82rem;font-weight:700;">/kick</code>
+              <span style="font-size:0.7rem;background:rgba(248,81,73,.12);color:#f85149;padding:2px 7px;border-radius:99px;font-weight:600;">ADMIN</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">Espelle un utente dal server. Può rientrare con un nuovo invito. Loggato nel mod-log.</div>
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--muted);opacity:.7;">Opzioni: <code style="font-size:0.75rem;">utente</code> · <code style="font-size:0.75rem;">motivo</code></div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <code style="background:rgba(88,101,242,.15);color:#a5b4fc;padding:2px 8px;border-radius:5px;font-size:0.82rem;font-weight:700;">/mute</code>
+              <span style="font-size:0.7rem;background:rgba(227,179,65,.12);color:#e3b341;padding:2px 7px;border-radius:99px;font-weight:600;">MOD</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">Silenzia un utente con timeout Discord per una durata specificata (in minuti).</div>
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--muted);opacity:.7;">Opzioni: <code style="font-size:0.75rem;">utente</code> · <code style="font-size:0.75rem;">durata</code> · <code style="font-size:0.75rem;">motivo</code></div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <code style="background:rgba(88,101,242,.15);color:#a5b4fc;padding:2px 8px;border-radius:5px;font-size:0.82rem;font-weight:700;">/warn</code>
+              <span style="font-size:0.7rem;background:rgba(227,179,65,.12);color:#e3b341;padding:2px 7px;border-radius:99px;font-weight:600;">MOD</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">Assegna un avvertimento a un utente con motivo. Accumulabili e consultabili.</div>
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--muted);opacity:.7;">Opzioni: <code style="font-size:0.75rem;">utente</code> · <code style="font-size:0.75rem;">motivo</code></div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <code style="background:rgba(88,101,242,.15);color:#a5b4fc;padding:2px 8px;border-radius:5px;font-size:0.82rem;font-weight:700;">/warnings</code>
+              <span style="font-size:0.7rem;background:rgba(139,148,158,.1);color:var(--muted);padding:2px 7px;border-radius:99px;font-weight:600;">TUTTI</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">Visualizza tutti gli avvertimenti accumulati da un utente nel server.</div>
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--muted);opacity:.7;">Opzioni: <code style="font-size:0.75rem;">utente</code></div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <code style="background:rgba(88,101,242,.15);color:#a5b4fc;padding:2px 8px;border-radius:5px;font-size:0.82rem;font-weight:700;">/purge</code>
+              <span style="font-size:0.7rem;background:rgba(227,179,65,.12);color:#e3b341;padding:2px 7px;border-radius:99px;font-weight:600;">MOD</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">Elimina in blocco da 1 a 100 messaggi dal canale corrente. Filtrabile per utente.</div>
+            <div style="margin-top:8px;font-size:0.75rem;color:var(--muted);opacity:.7;">Opzioni: <code style="font-size:0.75rem;">quantità</code> · <code style="font-size:0.75rem;">utente</code> (opz.)</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ── AUTO-MOD ── -->
@@ -1069,9 +1170,11 @@
           <label class="form-label">Canale log auto-mod</label>
           <select class="form-input" id="am_logChannel">
             <option value="">— Nessuno —</option>
-            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
-              <option value="<%= c.id %>" <%= (config.automod && config.automod.logChannel === c.id) ? 'selected' : '' %>># <%= c.name %></option>
-            <% }) %>
+            <% channels.filter(c=> c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%=(config.automod && config.automod.logChannel===c.id) ? 'selected' : '' %>>#
+                <%= c.name %>
+              </option>
+              <% }) %>
           </select>
         </div>
       </div>
@@ -1108,9 +1211,10 @@
           <label class="form-label">Canale musica</label>
           <select class="form-input" id="musicChannel">
             <option value="">— Tutti i canali —</option>
-            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
-              <option value="<%= c.id %>" <%= config.musicChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
-            <% }) %>
+            <% channels.filter(c=> c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%=config.musicChannel===c.id ? 'selected' : '' %>># <%= c.name %>
+              </option>
+              <% }) %>
           </select>
           <div class="form-hint">Il bot risponderà ai comandi musicali solo in questo canale</div>
         </div>
@@ -1118,9 +1222,10 @@
           <label class="form-label">Ruolo DJ</label>
           <select class="form-input" id="djRole">
             <option value="">— Nessuno —</option>
-            <% roles.filter(r => r.name !== '@everyone').forEach(r => { %>
-              <option value="<%= r.id %>" <%= config.djRole === r.id ? 'selected' : '' %>>@ <%= r.name %></option>
-            <% }) %>
+            <% roles.filter(r=> r.name !== '@everyone').forEach(r => { %>
+              <option value="<%= r.id %>" <%=config.djRole===r.id ? 'selected' : '' %>>@ <%= r.name %>
+              </option>
+              <% }) %>
           </select>
           <div class="form-hint">Solo chi ha questo ruolo potrà usare skip/stop/volume</div>
         </div>
@@ -1153,9 +1258,10 @@
           <label class="form-label">Categoria ticket</label>
           <select class="form-input" id="ticketCategory">
             <option value="">— Nessuna —</option>
-            <% channels.filter(c => c.type === 4).forEach(c => { %>
-              <option value="<%= c.id %>" <%= config.ticketCategory === c.id ? 'selected' : '' %>>📂 <%= c.name %></option>
-            <% }) %>
+            <% channels.filter(c=> c.type === 4).forEach(c => { %>
+              <option value="<%= c.id %>" <%=config.ticketCategory===c.id ? 'selected' : '' %>>📂 <%= c.name %>
+              </option>
+              <% }) %>
           </select>
           <div class="form-hint">I canali ticket verranno creati dentro questa categoria</div>
         </div>
@@ -1163,9 +1269,10 @@
           <label class="form-label">Canale log ticket</label>
           <select class="form-input" id="ticketLogChannel">
             <option value="">— Nessuno —</option>
-            <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
-              <option value="<%= c.id %>" <%= config.ticketLogChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
-            <% }) %>
+            <% channels.filter(c=> c.type === 0 || c.type === 5).forEach(c => { %>
+              <option value="<%= c.id %>" <%=config.ticketLogChannel===c.id ? 'selected' : '' %>># <%= c.name %>
+              </option>
+              <% }) %>
           </select>
           <div class="form-hint">Apertura e chiusura ticket vengono registrate qui</div>
         </div>
@@ -1281,9 +1388,11 @@
         <label class="form-label">Canale notifiche</label>
         <select class="form-input" id="twitchChannel">
           <option value="">— Nessuno —</option>
-          <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
-            <option value="<%= c.id %>" <%= (config.twitchAlerts && config.twitchAlerts.channelId === c.id) ? 'selected' : '' %>># <%= c.name %></option>
-          <% }) %>
+          <% channels.filter(c=> c.type === 0 || c.type === 5).forEach(c => { %>
+            <option value="<%= c.id %>" <%=(config.twitchAlerts && config.twitchAlerts.channelId===c.id) ? 'selected'
+              : '' %>># <%= c.name %>
+            </option>
+            <% }) %>
         </select>
       </div>
       <div class="form-group">
@@ -1322,9 +1431,11 @@
         <label class="form-label">Canale notifiche</label>
         <select id="tiktokChannel" class="form-input">
           <option value="">— Nessuno —</option>
-          <% channels.filter(c => c.type === 0).forEach(c => { %>
-            <option value="<%= c.id %>" <%=(config.tiktokAlerts && config.tiktokAlerts.channelId===c.id) ? 'selected' : '' %>>#<%= c.name %></option>
-          <% }) %>
+          <% channels.filter(c=> c.type === 0).forEach(c => { %>
+            <option value="<%= c.id %>" <%=(config.tiktokAlerts && config.tiktokAlerts.channelId===c.id) ? 'selected'
+              : '' %>>#<%= c.name %>
+            </option>
+            <% }) %>
         </select>
       </div>
 
@@ -1332,17 +1443,22 @@
       <div class="form-group">
         <label class="form-label">Aggiungi account TikTok</label>
         <div style="display:flex;gap:8px;">
-          <input type="text" id="tiktokSearchInput" class="form-input" placeholder="Username TikTok (senza @)" style="flex:1;" onkeydown="if(event.key==='Enter')searchTikTok()">
-          <button class="btn btn-accent" id="tiktokSearchBtn" onclick="searchTikTok()"><i class="fa-solid fa-magnifying-glass"></i> Cerca</button>
+          <input type="text" id="tiktokSearchInput" class="form-input" placeholder="Username TikTok (senza @)"
+            style="flex:1;" onkeydown="if(event.key==='Enter')searchTikTok()">
+          <button class="btn btn-accent" id="tiktokSearchBtn" onclick="searchTikTok()"><i
+              class="fa-solid fa-magnifying-glass"></i> Cerca</button>
         </div>
       </div>
 
       <!-- Profile card (nascosta di default) -->
-      <div id="tiktokProfileCard" style="display:none;margin-bottom:20px;padding:16px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);">
+      <div id="tiktokProfileCard"
+        style="display:none;margin-bottom:20px;padding:16px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:14px;">
-          <img id="tiktokProfileAvatar" src="" alt="" style="width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--border);">
+          <img id="tiktokProfileAvatar" src="" alt=""
+            style="width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--border);">
           <div style="flex:1;min-width:0;">
-            <div id="tiktokProfileName" style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            <div id="tiktokProfileName"
+              style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
             <div id="tiktokProfileHandle" style="color:var(--muted);font-size:0.82rem;"></div>
             <div id="tiktokProfileStats" style="color:var(--muted);font-size:0.8rem;margin-top:2px;"></div>
           </div>
@@ -1356,39 +1472,44 @@
       <div class="form-group">
         <label class="form-label">Account monitorati</label>
         <div id="tiktokUserList">
-          <% const tiktokUsers = (config.tiktokAlerts && config.tiktokAlerts.users) || []; %>
-          <% if (tiktokUsers.length > 0) { %>
-            <% tiktokUsers.forEach(u => { %>
-              <div class="list-item" id="tiktok-row-<%= u.name %>">
-                <div>
-                  <div class="list-item-main">🎵 @<%= u.name %></div>
+          <% const tiktokUsers=(config.tiktokAlerts && config.tiktokAlerts.users) || []; %>
+            <% if (tiktokUsers.length> 0) { %>
+              <% tiktokUsers.forEach(u=> { %>
+                <div class="list-item" id="tiktok-row-<%= u.name %>">
+                  <div>
+                    <div class="list-item-main">🎵 @<%= u.name %>
+                    </div>
+                  </div>
+                  <button class="btn btn-sm" style="background:rgba(248,81,73,.15);color:var(--red);"
+                    onclick="unsubscribeTikTok('<%= u.name %>')">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
                 </div>
-                <button class="btn btn-sm" style="background:rgba(248,81,73,.15);color:var(--red);" onclick="unsubscribeTikTok('<%= u.name %>')">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            <% }) %>
-          <% } else { %>
-            <div id="tiktokEmptyState" class="list-empty">
-              <i class="fa-brands fa-tiktok"></i>
-              <p>Nessun account monitorato. Cerca un username sopra per aggiungerne uno.</p>
-            </div>
-          <% } %>
+                <% }) %>
+                  <% } else { %>
+                    <div id="tiktokEmptyState" class="list-empty">
+                      <i class="fa-brands fa-tiktok"></i>
+                      <p>Nessun account monitorato. Cerca un username sopra per aggiungerne uno.</p>
+                    </div>
+                    <% } %>
         </div>
       </div>
 
-      <button class="btn btn-accent" onclick="saveSocial('tiktok')"><i class="fa-solid fa-floppy-disk"></i> Salva canale</button>
+      <button class="btn btn-accent" onclick="saveSocial('tiktok')"><i class="fa-solid fa-floppy-disk"></i> Salva
+        canale</button>
       <div id="tiktokStatus" style="margin-top:12px;font-size:0.85rem;display:none;"></div>
 
       <!-- Riepilogo ultimi post recuperati -->
       <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <label class="form-label" style="margin:0;">Ultimi post recuperati</label>
-          <button class="btn btn-sm" style="background:var(--surface2);color:var(--muted);font-size:0.78rem;" onclick="loadTikTokPosts()">
+          <button class="btn btn-sm" style="background:var(--surface2);color:var(--muted);font-size:0.78rem;"
+            onclick="loadTikTokPosts()">
             <i class="fa-solid fa-rotate-right"></i> Aggiorna
           </button>
         </div>
-        <div id="tiktokPostsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">
+        <div id="tiktokPostsGrid"
+          style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">
           <div style="color:var(--muted);font-size:0.85rem;padding:12px 0;">
             <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Caricamento...
           </div>
@@ -1410,9 +1531,11 @@
         <label class="form-label">Canale notifiche</label>
         <select class="form-input" id="instagramChannel">
           <option value="">— Nessuno —</option>
-          <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
-            <option value="<%= c.id %>" <%= (config.instagramAlerts && config.instagramAlerts.channelId === c.id) ? 'selected' : '' %>># <%= c.name %></option>
-          <% }) %>
+          <% channels.filter(c=> c.type === 0 || c.type === 5).forEach(c => { %>
+            <option value="<%= c.id %>" <%=(config.instagramAlerts && config.instagramAlerts.channelId===c.id)
+              ? 'selected' : '' %>># <%= c.name %>
+            </option>
+            <% }) %>
         </select>
       </div>
       <div class="form-group">
@@ -1427,7 +1550,8 @@
             </div>
             <% } else { %>
               <p style="color:var(--muted);font-size:0.85rem;">Nessun account monitorato. Usa
-                <code>/instagram add</code> su Discord.</p>
+                <code>/instagram add</code> su Discord.
+              </p>
               <% } %>
       </div>
       <button class="btn btn-accent" onclick="saveSocial('instagram')"><i class="fa-solid fa-floppy-disk"></i> Salva
@@ -1687,8 +1811,8 @@
               <div style="color:var(--muted);font-size:0.82rem;">Nessun post recuperato ancora.<br>Il primo check aggiornerà questo riepilogo.</div>
             </div>`;
           }
-          const ts = p.timestamp ? new Date(p.timestamp).toLocaleString('it-IT', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-          const desc = p.desc ? (p.desc.length > 80 ? p.desc.slice(0,77) + '…' : p.desc) : '';
+          const ts = p.timestamp ? new Date(p.timestamp).toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+          const desc = p.desc ? (p.desc.length > 80 ? p.desc.slice(0, 77) + '…' : p.desc) : '';
           const likes = p.likes != null ? Number(p.likes).toLocaleString('it') : '—';
           const views = p.views != null ? Number(p.views).toLocaleString('it') : '—';
           const cover = p.cover ? `<a href="${p.url}" target="_blank" rel="noopener"><img src="${p.cover}" style="width:100%;height:140px;object-fit:cover;border-radius:7px;display:block;margin-bottom:10px;" onerror="this.style.display='none'"></a>` : '';
