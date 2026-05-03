@@ -1506,37 +1506,47 @@
         canale</button>
       <div id="tiktokStatus" style="margin-top:12px;font-size:0.85rem;display:none;"></div>
 
-      <!-- Credenziali TikTok per-server -->
-      <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Cookies TikTok del server</span>
-          <span style="font-size:0.75rem;background:rgba(248,184,0,.13);color:#fbb80a;padding:2px 8px;border-radius:20px;font-weight:600;">Necessario per ricevere notifiche</span>
-        </div>
-        <div class="info-box" style="margin-bottom:14px;">
-          <i class="fa-solid fa-circle-info" style="margin-right:6px;color:var(--accent);"></i>
-          TikTok blocca i bot senza autenticazione. Inserisci i cookie del tuo account TikTok per questo server.<br>
-          <strong>Come ottenerli:</strong> apri TikTok nel browser → F12 → Application → Cookies → <code>sessionid</code> e <code>ttwid</code>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Session ID <span style="color:var(--muted);font-weight:400;">(sessionid)</span></label>
-            <input type="password" class="form-input" id="tiktokSessionId"
-              placeholder="Incolla il valore del cookie sessionid"
-              value="<%= (config.tiktokSession && config.tiktokSession.sessionid) ? '••••••••••••••••' : '' %>">
-            <div class="form-hint"><% if(config.tiktokSession && config.tiktokSession.sessionid){ %>✅ Cookie configurato<% } else { %>Non configurato — usa i cookie globali del bot<% } %></div>
+      <!-- Credenziali TikTok per-server (AVANZATO / OPZIONALE) -->
+      <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+        <button type="button"
+          style="background:none;border:none;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:space-between;color:var(--muted);padding:0;"
+          onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.adv-arrow').style.transform=this.nextElementSibling.style.display==='none'?'rotate(0deg)':'rotate(90deg)'">
+          <span style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">
+            ⚙️ Avanzato — Cookie TikTok del server
+            <% if(config.tiktokSession && config.tiktokSession.sessionid){ %>
+              <span style="margin-left:8px;font-size:0.72rem;background:rgba(63,185,80,.15);color:#3fb950;padding:2px 8px;border-radius:20px;font-weight:600;">✅ Configurato</span>
+            <% } %>
+          </span>
+          <i class="fa-solid fa-chevron-right adv-arrow" style="font-size:0.8rem;transition:transform .2s;"></i>
+        </button>
+        <div style="display:none;margin-top:14px;">
+          <div class="info-box" style="margin-bottom:14px;">
+            <i class="fa-solid fa-circle-info" style="margin-right:6px;color:var(--accent);"></i>
+            <strong>Non è necessario in condizioni normali.</strong> Il bot usa automaticamente RSS per rilevare i nuovi video senza richiedere alcun account.<br>
+            Configura i cookie solo se le notifiche non arrivano da più di 24 ore, oppure se vuoi che il bot usi il tuo account per accedere a profili privati.
           </div>
-          <div class="form-group">
-            <label class="form-label">ttwid</label>
-            <input type="password" class="form-input" id="tiktokTtwid"
-              placeholder="Incolla il valore del cookie ttwid"
-              value="<%= (config.tiktokSession && config.tiktokSession.ttwid) ? '••••••••••••••••' : '' %>">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Session ID <span style="color:var(--muted);font-weight:400;">(sessionid)</span></label>
+              <input type="password" class="form-input" id="tiktokSessionId"
+                placeholder="F12 → Application → Cookies → tiktok.com → sessionid"
+                value="<%= (config.tiktokSession && config.tiktokSession.sessionid) ? '••••••••••••••••' : '' %>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ttwid</label>
+              <input type="password" class="form-input" id="tiktokTtwid"
+                placeholder="F12 → Application → Cookies → tiktok.com → ttwid"
+                value="<%= (config.tiktokSession && config.tiktokSession.ttwid) ? '••••••••••••••••' : '' %>">
+            </div>
           </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn btn-accent" onclick="saveTikTokSession()"><i class="fa-solid fa-key"></i> Salva cookie</button>
+            <% if(config.tiktokSession && config.tiktokSession.sessionid){ %>
+              <button class="btn" style="background:rgba(248,81,73,.12);color:var(--red);" onclick="clearTikTokSession()"><i class="fa-solid fa-trash"></i> Rimuovi</button>
+            <% } %>
+          </div>
+          <div id="tiktokSessionStatus" style="margin-top:10px;font-size:0.85rem;display:none;"></div>
         </div>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn btn-accent" onclick="saveTikTokSession()"><i class="fa-solid fa-key"></i> Salva cookie</button>
-          <button class="btn" style="background:rgba(248,81,73,.12);color:var(--red);" onclick="clearTikTokSession()"><i class="fa-solid fa-trash"></i> Rimuovi</button>
-        </div>
-        <div id="tiktokSessionStatus" style="margin-top:10px;font-size:0.85rem;display:none;"></div>
       </div>
 
       <!-- Riepilogo ultimi post recuperati -->

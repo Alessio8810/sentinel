@@ -119,10 +119,56 @@ async function checkTwitch(client) {
 
 let _tiktokRunning = false;
 
-// Carica la pagina profilo con browser fresco (come test-puppeteer.js che funziona)
-// guildSession = { sessionid, ttwid } — cookie specifici del guild, fallback alle env globali
-async function getLatestTikTokVideo(username, guildSession = {}) {
-    logger.info(`TikTok: avvio browser per @${username}...`);
+// Istanze pubbliche RSSHub — nessuna configurazione richiesta agli utenti
+const RSSHUB_INSTANCES = [
+    'https://rsshub.app',
+    'https://rsshub.rssforever.com',
+    'https://hub.slarky.com',
+];
+
+// Strategia 1: RSS via RSSHub — zero configurazione, funziona per tutti
+async function getLatestTikTokVideoViaRSS(username) {
+    for (const instance of RSSHUB_INSTANCES) {
+        try {
+            const url = `${instance}/tiktok/user/@${username}`;
+            const feed = await rssParser.parseURL(url);
+            if (!feed.items?.length) continue;
+
+            const item = feed.items[0];
+            // Estrai l'ID video dall'URL
+            const videoId = (item.link || item.guid || '').match(/\/video\/(\d+)/)?.[1]
+                         || item.guid || item.link;
+
+            if (!videoId) continue;
+
+            // Cerca thumbnail nel content HTML
+            let cover = null;
+            const content = item['content:encoded'] || item.content || '';
+            const imgMatch = content.match(/<img[^>]+src="([^"]+)"/i);
+            if (imgMatch) cover = imgMatch[1];
+
+            logger.info(`TikTok RSS [${instance}]: trovato video ${videoId} per @${username}`);
+            return {
+                id: videoId,
+                desc: item.title || item.contentSnippet || '',
+                cover,
+                author: feed.title?.replace(/^TikTok[· ·]+/i, '') || username,
+                avatar: null,
+                likes: 0,
+                views: 0,
+                url: item.link,
+            };
+        } catch (e) {
+            logger.warn(`TikTok RSS: ${instance} fallito per @${username}: ${e.message}`);
+        }
+    }
+    return null;
+}
+
+// Strategia 2: Puppeteer (fallback) — usa cookie globali bot o quelli del guild
+// guildSession = { sessionid, ttwid } — opzionale, per server che vogliono più affidabilità
+async function getLatestTikTokVideoPuppeteer(username, guildSession = {}) {
+    logger.info(`TikTok puppeteer: avvio browser per @${username}...`);
     const browser = await launchBrowser();
     const page = await browser.newPage();
     try {
@@ -137,7 +183,6 @@ async function getLatestTikTokVideo(username, guildSession = {}) {
         if (ttwid) cookies.push({ name: 'ttwid', value: ttwid, domain: '.tiktok.com', path: '/' });
         if (cookies.length) await page.setCookie(...cookies);
 
-        // Intercetta XHR item_list (identico a test-puppeteer.js che funziona)
         let videoList = null;
         page.on('response', async (response) => {
             if (videoList) return;
@@ -149,22 +194,18 @@ async function getLatestTikTokVideo(username, guildSession = {}) {
             } catch { }
         });
 
-        // networkidle0 come nel test confermato funzionante
         await page.goto(`https://www.tiktok.com/@${username}`, {
             waitUntil: 'networkidle0',
             timeout: 45000,
         }).catch(() => { });
 
-        // Extra 5s per XHR tardivi (come nel test)
         await new Promise(r => setTimeout(r, 5000));
 
         if (!videoList?.length) {
-            logger.warn(`TikTok: nessun video trovato per @${username}`);
+            logger.warn(`TikTok puppeteer: nessun video trovato per @${username}`);
             return null;
         }
-        logger.info(`TikTok: trovati ${videoList.length} video per @${username}`);
 
-        // Estrai secUid dal DOM
         const pageData = await page.evaluate(() => {
             try {
                 const el = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
@@ -191,6 +232,18 @@ async function getLatestTikTokVideo(username, guildSession = {}) {
     }
 }
 
+// Entry point: prova RSS → fallback puppeteer
+async function getLatestTikTokVideo(username, guildSession = {}) {
+    // Se il guild ha cookie propri, vai direttamente a puppeteer (più affidabile con auth)
+    const hasGuildCookies = guildSession.sessionid || guildSession.ttwid;
+    if (!hasGuildCookies) {
+        const rssResult = await getLatestTikTokVideoViaRSS(username);
+        if (rssResult) return rssResult;
+        logger.info(`TikTok: RSS fallito per @${username}, provo puppeteer fallback...`);
+    }
+    return getLatestTikTokVideoPuppeteer(username, guildSession);
+}
+
 async function checkTikTok(client) {
     if (_tiktokRunning) return; // evita check sovrapposti
     _tiktokRunning = true;
@@ -207,7 +260,6 @@ async function checkTikTok(client) {
                 continue;
             }
 
-            // Cookie specifici del guild (inseriti dall'admin nella dashboard)
             const guildSession = guildRecord.tiktokSession || {};
 
             let dirty = false;
@@ -217,17 +269,15 @@ async function checkTikTok(client) {
                     const video = await getLatestTikTokVideo(user.name, guildSession);
                     if (!video) continue;
 
-                    // Salva il secUid estratto dalla pagina (una tantum)
-                    if (!user.secUid && video.secUid) {
+                    if (video.secUid && !user.secUid) {
                         alerts.users[i].secUid = video.secUid;
                         dirty = true;
                     }
 
                     if (video.id === user.lastPostId) continue;
 
-                    const videoUrl = `https://www.tiktok.com/@${user.name}/video/${video.id}`;
+                    const videoUrl = video.url || `https://www.tiktok.com/@${user.name}/video/${video.id}`;
 
-                    // Valida URL (Discord rifiuta URL non-http/https o con caratteri non validi)
                     const isValidUrl = (u) => { try { const p = new URL(u); return p.protocol === 'https:' || p.protocol === 'http:'; } catch { return false; } };
                     const safeAvatar = video.avatar && isValidUrl(video.avatar) ? video.avatar : undefined;
                     const safeCover = video.cover && isValidUrl(video.cover) ? video.cover : null;
@@ -238,18 +288,19 @@ async function checkTikTok(client) {
                         .setAuthor({ name: (video.author || user.name).slice(0, 256), iconURL: safeAvatar })
                         .setTitle(`🎵 Nuovo video TikTok da @${user.name}`.slice(0, 256))
                         .setURL(videoUrl)
-                        .addFields(
-                            { name: '❤️ Like', value: video.likes.toLocaleString('it'), inline: true },
-                            { name: '▶️ Visualizzazioni', value: video.views.toLocaleString('it'), inline: true },
-                        )
                         .setTimestamp();
                     if (safeDesc) embed.setDescription(safeDesc);
                     if (safeCover) embed.setImage(safeCover);
+                    if (video.likes || video.views) {
+                        embed.addFields(
+                            { name: '❤️ Like', value: video.likes.toLocaleString('it'), inline: true },
+                            { name: '▶️ Visualizzazioni', value: video.views.toLocaleString('it'), inline: true },
+                        );
+                    }
 
                     await channel.send({ content: `📲 **@${user.name}** ha pubblicato un nuovo video su TikTok!`, embeds: [embed] });
                     logger.info(`TikTok: notifica inviata per @${user.name} (video ${video.id})`);
 
-                    // Aggiorna lastPostId solo DOPO invio riuscito + salva metadati per dashboard
                     alerts.users[i].lastPostId = video.id;
                     alerts.users[i].lastPost = {
                         id: video.id,
@@ -262,7 +313,6 @@ async function checkTikTok(client) {
                     };
                     dirty = true;
                 } catch (e) {
-                    // Logga errori dettagliati (AggregateError di discord.js ha .errors)
                     const detail = e.errors ? JSON.stringify(e.errors) : e.stack || e.message;
                     logger.warn(`TikTok check error (@${user.name}): ${e.message} — ${detail}`);
                 }
