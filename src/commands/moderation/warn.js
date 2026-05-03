@@ -11,12 +11,11 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
     .addUserOption(o => o.setName('utente').setDescription('Utente da avvertire').setRequired(true))
     .addStringOption(o => o.setName('motivo').setDescription('Motivo').setRequired(true)),
-  cooldown: 3,
-  async execute(interaction) {
+  cooldown: 3,\n    await interaction.deferReply();
     const target = interaction.options.getMember('utente');
     const reason = interaction.options.getString('motivo');
 
-    if (!target) return interaction.reply({ embeds: [errorEmbed('Utente non trovato.')], ephemeral: true });
+    if (!target) return interaction.editReply({ embeds: [errorEmbed('Utente non trovato.')] });
 
     // findOrCreate evita la doppia query find+create
     let [userDoc] = await User.findOrCreate({ where: { userId: target.id, guildId: interaction.guild.id } });
@@ -45,6 +44,6 @@ module.exports = {
       )
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
   },
 };

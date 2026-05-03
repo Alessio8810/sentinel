@@ -15,20 +15,21 @@ module.exports = {
     .addIntegerOption(o => o.setName('elimina_messaggi').setDescription('Elimina messaggi degli ultimi N giorni (0-7)').setMinValue(0).setMaxValue(7)),
   cooldown: 5,
   async execute(interaction) {
+    await interaction.deferReply();
     const target = interaction.options.getMember('utente');
     const reason = interaction.options.getString('motivo') || 'Nessuna ragione specificata';
     const durationStr = interaction.options.getString('durata');
     const deleteDays = interaction.options.getInteger('elimina_messaggi') || 0;
 
-    if (!target) return interaction.reply({ embeds: [errorEmbed('Utente non trovato.')], ephemeral: true });
-    if (target.id === interaction.user.id) return interaction.reply({ embeds: [errorEmbed('Non puoi bannare te stesso.')], ephemeral: true });
-    if (!target.bannable) return interaction.reply({ embeds: [errorEmbed('Non posso bannare questo utente.')], ephemeral: true });
+    if (!target) return interaction.editReply({ embeds: [errorEmbed('Utente non trovato.')] });
+    if (target.id === interaction.user.id) return interaction.editReply({ embeds: [errorEmbed('Non puoi bannare te stesso.')] });
+    if (!target.bannable) return interaction.editReply({ embeds: [errorEmbed('Non posso bannare questo utente.')] });
 
     let duration = null;
     let expiresAt = null;
     if (durationStr) {
       duration = parseDuration(durationStr);
-      if (!duration) return interaction.reply({ embeds: [errorEmbed('Durata non valida. Usa es. `10m`, `2h`, `1d`.')], ephemeral: true });
+      if (!duration) return interaction.editReply({ embeds: [errorEmbed('Durata non valida. Usa es. `10m`, `2h`, `1d`.')] });
       expiresAt = new Date(Date.now() + duration);
     }
 
@@ -58,7 +59,7 @@ module.exports = {
       )
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
   },
 };
 

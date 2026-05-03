@@ -44,8 +44,10 @@ module.exports = {
 
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
+    await interaction.deferReply({ ephemeral: sub !== 'list' });
+
     const guildConfig = await Guild.findOne({ where: { guildId: interaction.guild.id } });
-    if (!guildConfig) return interaction.reply({ content: '❌ Configurazione server non trovata.', ephemeral: true });
+    if (!guildConfig) return interaction.editReply({ content: '❌ Configurazione server non trovata.' });
 
     const schedule = Array.isArray(guildConfig.liveSchedule) ? [...guildConfig.liveSchedule] : [];
 
@@ -58,7 +60,7 @@ module.exports = {
       const note = interaction.options.getString('note') || '';
 
       if (!/^\d{1,2}:\d{2}$/.test(orario)) {
-        return interaction.reply({ content: '❌ Formato orario non valido. Usa HH:MM (es. 21:00)', ephemeral: true });
+        return interaction.editReply({ content: '❌ Formato orario non valido. Usa HH:MM (es. 21:00)' });
       }
 
       const entry = {
@@ -89,20 +91,20 @@ module.exports = {
         )
         .setTimestamp();
 
-      return interaction.reply({ embeds: [embed] });
+      return interaction.editReply({ embeds: [embed] });
     }
 
     // ─── REMOVE ───
     if (sub === 'remove') {
       const id = interaction.options.getInteger('id');
       const idx = schedule.findIndex(e => e.id === id);
-      if (idx === -1) return interaction.reply({ content: `❌ Nessuna live con ID **${id}** trovata.`, ephemeral: true });
+      if (idx === -1) return interaction.editReply({ content: `❌ Nessuna live con ID **${id}** trovata.` });
 
       const removed = schedule.splice(idx, 1)[0];
       guildConfig.liveSchedule = schedule;
       await guildConfig.save();
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [new EmbedBuilder()
           .setColor('#57F287')
           .setDescription(`✅ Live **${removed.titolo}** rimossa dalla programmazione.`)],
@@ -112,7 +114,7 @@ module.exports = {
     // ─── LIST ───
     if (sub === 'list') {
       if (schedule.length === 0) {
-        return interaction.reply({
+        return interaction.editReply({
           embeds: [new EmbedBuilder()
             .setColor('#5865F2')
             .setDescription('📅 Nessuna live in programmazione.\nUsa `/schedule add` per aggiungerne una.')],
@@ -149,7 +151,7 @@ module.exports = {
         embed.addFields({ name: `📆 ${day}`, value: lines });
       }
 
-      return interaction.reply({ embeds: [embed] });
+      return interaction.editReply({ embeds: [embed] });
     }
   },
 };

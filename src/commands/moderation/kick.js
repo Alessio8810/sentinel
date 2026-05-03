@@ -8,13 +8,12 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
     .addUserOption(o => o.setName('utente').setDescription('Utente da espellere').setRequired(true))
     .addStringOption(o => o.setName('motivo').setDescription('Motivo')),
-  cooldown: 5,
-  async execute(interaction) {
+  cooldown: 5,\n    await interaction.deferReply();
     const target = interaction.options.getMember('utente');
     const reason = interaction.options.getString('motivo') || 'Nessuna ragione specificata';
 
-    if (!target) return interaction.reply({ embeds: [errorEmbed('Utente non trovato.')], ephemeral: true });
-    if (!target.kickable) return interaction.reply({ embeds: [errorEmbed('Non posso espellere questo utente.')], ephemeral: true });
+    if (!target) return interaction.editReply({ embeds: [errorEmbed('Utente non trovato.')] });
+    if (!target.kickable) return interaction.editReply({ embeds: [errorEmbed('Non posso espellere questo utente.')] });
 
     await target.send(`👢 Sei stato espulso da **${interaction.guild.name}**.\n**Motivo:** ${reason}`).catch(() => {});
     await target.kick(reason);
@@ -29,6 +28,6 @@ module.exports = {
       )
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
   },
 };

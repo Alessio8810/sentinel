@@ -13,16 +13,17 @@ module.exports = {
     .addStringOption(o => o.setName('motivo').setDescription('Motivo')),
   cooldown: 5,
   async execute(interaction) {
+    await interaction.deferReply();
     const target = interaction.options.getMember('utente');
     const durationStr = interaction.options.getString('durata');
     const reason = interaction.options.getString('motivo') || 'Nessuna ragione specificata';
 
-    if (!target) return interaction.reply({ embeds: [errorEmbed('Utente non trovato.')], ephemeral: true });
-    if (!target.moderatable) return interaction.reply({ embeds: [errorEmbed('Non posso silenziare questo utente.')], ephemeral: true });
+    if (!target) return interaction.editReply({ embeds: [errorEmbed('Utente non trovato.')] });
+    if (!target.moderatable) return interaction.editReply({ embeds: [errorEmbed('Non posso silenziare questo utente.')] });
 
     const duration = parseDuration(durationStr);
-    if (!duration) return interaction.reply({ embeds: [errorEmbed('Durata non valida. Usa es. `10m`, `2h`, `1d`.')], ephemeral: true });
-    if (duration > 28 * 24 * 60 * 60 * 1000) return interaction.reply({ embeds: [errorEmbed('Il timeout massimo di Discord è 28 giorni.')], ephemeral: true });
+    if (!duration) return interaction.editReply({ embeds: [errorEmbed('Durata non valida. Usa es. `10m`, `2h`, `1d`.')] });
+    if (duration > 28 * 24 * 60 * 60 * 1000) return interaction.editReply({ embeds: [errorEmbed('Il timeout massimo di Discord è 28 giorni.')] });
 
     await target.timeout(duration, reason);
 
@@ -46,6 +47,6 @@ module.exports = {
       )
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
   },
 };

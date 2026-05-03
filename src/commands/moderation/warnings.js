@@ -9,11 +9,12 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
     .addUserOption(o => o.setName('utente').setDescription('Utente').setRequired(true)),
   async execute(interaction) {
+    await interaction.deferReply();
     const target = interaction.options.getUser('utente');
     const userDoc = await User.findOne({ where: { userId: target.id, guildId: interaction.guild.id } });
 
     if (!userDoc || !userDoc.warnings.length) {
-      return interaction.reply({ embeds: [new EmbedBuilder().setColor('#57F287').setDescription(`✅ ${target.tag} non ha avvertimenti.`)], ephemeral: true });
+      return interaction.editReply({ embeds: [new EmbedBuilder().setColor('#57F287').setDescription(`✅ ${target.tag} non ha avvertimenti.`)] });
     }
 
     const list = userDoc.warnings.slice(-10).map((w, i) =>
@@ -27,6 +28,6 @@ module.exports = {
       .setFooter({ text: `Totale: ${userDoc.warnings.length}` })
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
   },
 };
