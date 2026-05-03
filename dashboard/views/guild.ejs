@@ -807,6 +807,10 @@
           %><span class="status-dot"></span>
           <% } %>
       </a>
+      <a href="#liveschedule" class="nav-link">
+        <span class="icon"><i class="fa-solid fa-calendar-days"></i></span> Programmazione Live
+        <% if ((config.liveSchedule||[]).length>0) { %><span class="status-dot"></span><% } %>
+      </a>
       <a href="#customcmds" class="nav-link">
         <span class="icon"><i class="fa-solid fa-terminal"></i></span> Comandi Custom
         <% if ((config.customCommands||[]).length>0) { %><span class="status-dot"></span>
@@ -878,6 +882,9 @@
           { id: 'customcmds', brand: false, icon: 'fa-terminal', color: 'rgba(52,211,153,.15)', iconColor: '#34d399',
           title: 'Comandi Custom', desc: 'Crea i tuoi comandi slash con risposte personalizzate', active:
           (config.customCommands||[]).length > 0 },
+          { id: 'liveschedule', brand: false, icon: 'fa-calendar-days', color: 'rgba(88,101,242,.15)', iconColor: '#5865F2',
+          title: 'Programmazione Live', desc: 'Orari settimanali delle live con notifiche DM ai subscriber', active:
+          (config.liveSchedule||[]).length > 0 },
           ];
           %>
           <% pluginList.forEach(p=> { %>
@@ -1559,6 +1566,75 @@
       <div id="instagramStatus" style="margin-top:12px;font-size:0.85rem;display:none;"></div>
     </div>
 
+    <!-- ── PROGRAMMAZIONE LIVE ── -->
+    <div class="card" id="liveschedule">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(88,101,242,.12);color:#5865F2;"><i class="fa-solid fa-calendar-days"></i></div>
+        <div class="card-header-text">
+          <h3>Programmazione Live</h3>
+          <p>Orari settimanali delle live — gli iscritti ricevono un DM 30 min prima</p>
+        </div>
+      </div>
+
+      <!-- Canale annunci -->
+      <div class="form-group">
+        <label class="form-label">Canale annunci live <span style="color:var(--muted);font-weight:400;">(opzionale)</span></label>
+        <select class="form-input" id="scheduleChannel">
+          <option value="">— Nessuno —</option>
+          <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+            <option value="<%= c.id %>" <%= config.scheduleChannel === c.id ? 'selected' : '' %>># <%= c.name %></option>
+          <% }) %>
+        </select>
+        <div class="form-hint">Se impostato, il bot manda <code>@here</code> in questo canale 30 min prima di ogni live</div>
+      </div>
+      <button class="btn btn-accent" style="margin-bottom:24px;" onclick="saveScheduleChannel()"><i class="fa-solid fa-floppy-disk"></i> Salva canale</button>
+      <div id="scheduleChannelStatus" style="margin-bottom:16px;font-size:0.85rem;display:none;"></div>
+
+      <!-- Programmazione corrente -->
+      <div style="border-top:1px solid var(--border);padding-top:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Programmazione settimanale</div>
+          <span style="font-size:0.78rem;color:var(--muted);"><%= (config.scheduleSubscribers||[]).length %> iscritti alle notifiche</span>
+        </div>
+
+        <% const liveSchedule = config.liveSchedule || [];
+           const dayNames = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+           const platformEmojis = { twitch:'🟣', youtube:'▶️', tiktok:'🎵', instagram:'📸', altro:'🎮' };
+        %>
+        <% if (liveSchedule.length === 0) { %>
+          <div class="list-empty">
+            <i class="fa-solid fa-calendar-days"></i>
+            <p>Nessuna live in programma.<br>Usa <code>/schedule add</code> su Discord per aggiungerne una.</p>
+          </div>
+        <% } else { %>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;">
+            <% liveSchedule.slice().sort((a,b) => a.giorno - b.giorno || a.orario.localeCompare(b.orario)).forEach(e => { %>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:0.8rem;font-weight:700;color:var(--muted);">📆 <%= dayNames[e.giorno] %> · <%= e.orario %></span>
+                  <span style="font-size:1rem;"><%= platformEmojis[e.piattaforma] || '🎮' %></span>
+                </div>
+                <div style="font-weight:700;font-size:0.95rem;"><%= e.titolo %></div>
+                <% if (e.note) { %><div style="font-size:0.78rem;color:var(--muted);"><%= e.note %></div><% } %>
+                <div style="margin-top:4px;display:flex;align-items:center;justify-content:space-between;">
+                  <code style="font-size:0.72rem;color:var(--muted);">ID: <%= e.id %></code>
+                  <button class="btn btn-sm" style="background:rgba(248,81,73,.12);color:var(--red);padding:4px 10px;" onclick="removeLive(<%= e.id %>)">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <div class="info-box" style="margin-top:16px;">
+          <i class="fa-solid fa-circle-info" style="margin-right:6px;color:var(--accent);"></i>
+          Gestisci la programmazione con: <code>/schedule add</code> · <code>/schedule list</code> · <code>/schedule remove</code><br>
+          Gli utenti possono iscriversi con <code>/schedule-notify subscribe</code>
+        </div>
+      </div>
+    </div>
+
     <!-- ── COMANDI CUSTOM ── -->
     <div class="card" id="customcmds">
       <div class="card-header">
@@ -1875,6 +1951,55 @@
     async function resetNick() {
       document.getElementById('botNick').value = '';
       await savePersonalization();
+    }
+
+    // ─── SCHEDULE LIVE ───
+    async function saveScheduleChannel() {
+      const channelId = document.getElementById('scheduleChannel').value;
+      const statusEl = document.getElementById('scheduleChannelStatus');
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = '⏳ Salvataggio...';
+      try {
+        const res = await fetch('/dashboard/<%= guild.id %>/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section: 'scheduleChannel', data: { scheduleChannel: channelId } }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          statusEl.style.color = '#34d399';
+          statusEl.textContent = '✅ Canale salvato!';
+          showToast('Canale annunci live salvato!', 'success');
+        } else {
+          statusEl.style.color = '#f87171';
+          statusEl.textContent = '❌ ' + (json.error || 'Errore');
+        }
+      } catch (e) {
+        statusEl.style.color = '#f87171';
+        statusEl.textContent = '❌ Errore di rete.';
+      }
+      setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+    }
+
+    async function removeLive(id) {
+      if (!confirm('Rimuovere questa live dalla programmazione?')) return;
+      try {
+        const res = await fetch('/dashboard/<%= guild.id %>/remove-live', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast('Live rimossa!', 'success');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast(json.error || 'Errore', 'error');
+        }
+      } catch (e) {
+        showToast('Errore di rete.', 'error');
+      }
     }
 
     // ─── TAG INPUT (parole bannate) ───

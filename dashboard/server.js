@@ -112,6 +112,7 @@ app.post('/dashboard/:guildId/save', ensureAuth, async (req, res) => {
       'modLogChannel',
       'musicChannel', 'djRole',
       'ticketsEnabled', 'ticketCategory', 'ticketLogChannel',
+      'scheduleChannel',
     ];
     for (const key of scalarAllowed) {
       if (data[key] !== undefined) config[key] = data[key];
@@ -295,6 +296,28 @@ app.post('/dashboard/:guildId/save-social', ensureAuth, async (req, res) => {
     res.json({ success: true });
   } catch (e) {
     console.error('POST /save-social errore:', e.message);
+    res.status(500).json({ error: 'Errore interno del server.' });
+  }
+});
+
+// ─── REMOVE LIVE (schedule) ───
+app.post('/dashboard/:guildId/remove-live', ensureAuth, async (req, res) => {
+  const guild = req.user.guilds.find(g => g.id === req.params.guildId);
+  if (!guild) return res.status(403).json({ error: 'Accesso negato.' });
+  const { id } = req.body;
+  if (id === undefined || id === null) return res.status(400).json({ error: 'ID mancante.' });
+  try {
+    const [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
+    const schedule = Array.isArray(config.liveSchedule) ? config.liveSchedule : [];
+    const idx = schedule.findIndex(e => e.id === Number(id));
+    if (idx === -1) return res.status(404).json({ error: 'Live non trovata.' });
+    schedule.splice(idx, 1);
+    config.liveSchedule = schedule;
+    config.changed('liveSchedule', true);
+    await config.save();
+    res.json({ success: true });
+  } catch (e) {
+    console.error('POST /remove-live errore:', e.message);
     res.status(500).json({ error: 'Errore interno del server.' });
   }
 });

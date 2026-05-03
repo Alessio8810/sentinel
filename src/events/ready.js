@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const { startScheduleJob } = require('../modules/scheduleNotifier');
 
 module.exports = {
   name: 'ready',
@@ -19,6 +20,8 @@ module.exports = {
           }
         }
       }
-    }
+    // Avvia il job per le notifiche della programmazione live
+    startScheduleJob(client);
+    logger.info('✅ Schedule notifier avviato');
   },
 };
