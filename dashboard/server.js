@@ -300,6 +300,28 @@ app.post('/dashboard/:guildId/save-social', ensureAuth, async (req, res) => {
   }
 });
 
+// ─── TIKTOK SESSION (cookie per-guild) ───
+app.post('/dashboard/:guildId/save-tiktok-session', ensureAuth, async (req, res) => {
+  const guild = req.user.guilds.find(g => g.id === req.params.guildId);
+  if (!guild) return res.status(403).json({ error: 'Accesso negato.' });
+
+  const { sessionid, ttwid } = req.body;
+  // Validazione minima: evita valori placeholder
+  const cleanSessionid = (typeof sessionid === 'string' && sessionid.length > 4) ? sessionid : null;
+  const cleanTtwid = (typeof ttwid === 'string' && ttwid.length > 4) ? ttwid : null;
+
+  try {
+    const [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
+    config.tiktokSession = { sessionid: cleanSessionid, ttwid: cleanTtwid };
+    config.changed('tiktokSession', true);
+    await config.save();
+    res.json({ success: true });
+  } catch (e) {
+    console.error('POST /save-tiktok-session errore:', e.message);
+    res.status(500).json({ error: 'Errore interno del server.' });
+  }
+});
+
 // ─── REMOVE LIVE (schedule) ───
 app.post('/dashboard/:guildId/remove-live', ensureAuth, async (req, res) => {
   const guild = req.user.guilds.find(g => g.id === req.params.guildId);

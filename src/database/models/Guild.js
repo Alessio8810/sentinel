@@ -43,6 +43,7 @@ const Guild = sequelize.define('Guild', {
   premiumEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
   twitchAlerts: { type: DataTypes.JSON, defaultValue: { channelId: null, streamers: [] } },
   tiktokAlerts: { type: DataTypes.JSON, defaultValue: { channelId: null, users: [] } },
+  tiktokSession: { type: DataTypes.JSON, defaultValue: { sessionid: null, ttwid: null } },
   instagramAlerts: { type: DataTypes.JSON, defaultValue: { channelId: null, users: [] } },
   liveSchedule: { type: DataTypes.JSON, defaultValue: [] },
   scheduleChannel: { type: DataTypes.STRING(30), allowNull: true },

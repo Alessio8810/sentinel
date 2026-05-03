@@ -1506,6 +1506,39 @@
         canale</button>
       <div id="tiktokStatus" style="margin-top:12px;font-size:0.85rem;display:none;"></div>
 
+      <!-- Credenziali TikTok per-server -->
+      <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Cookies TikTok del server</span>
+          <span style="font-size:0.75rem;background:rgba(248,184,0,.13);color:#fbb80a;padding:2px 8px;border-radius:20px;font-weight:600;">Necessario per ricevere notifiche</span>
+        </div>
+        <div class="info-box" style="margin-bottom:14px;">
+          <i class="fa-solid fa-circle-info" style="margin-right:6px;color:var(--accent);"></i>
+          TikTok blocca i bot senza autenticazione. Inserisci i cookie del tuo account TikTok per questo server.<br>
+          <strong>Come ottenerli:</strong> apri TikTok nel browser → F12 → Application → Cookies → <code>sessionid</code> e <code>ttwid</code>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Session ID <span style="color:var(--muted);font-weight:400;">(sessionid)</span></label>
+            <input type="password" class="form-input" id="tiktokSessionId"
+              placeholder="Incolla il valore del cookie sessionid"
+              value="<%= (config.tiktokSession && config.tiktokSession.sessionid) ? '••••••••••••••••' : '' %>">
+            <div class="form-hint"><% if(config.tiktokSession && config.tiktokSession.sessionid){ %>✅ Cookie configurato<% } else { %>Non configurato — usa i cookie globali del bot<% } %></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ttwid</label>
+            <input type="password" class="form-input" id="tiktokTtwid"
+              placeholder="Incolla il valore del cookie ttwid"
+              value="<%= (config.tiktokSession && config.tiktokSession.ttwid) ? '••••••••••••••••' : '' %>">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-accent" onclick="saveTikTokSession()"><i class="fa-solid fa-key"></i> Salva cookie</button>
+          <button class="btn" style="background:rgba(248,81,73,.12);color:var(--red);" onclick="clearTikTokSession()"><i class="fa-solid fa-trash"></i> Rimuovi</button>
+        </div>
+        <div id="tiktokSessionStatus" style="margin-top:10px;font-size:0.85rem;display:none;"></div>
+      </div>
+
       <!-- Riepilogo ultimi post recuperati -->
       <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -2000,6 +2033,74 @@
       } catch (e) {
         showToast('Errore di rete.', 'error');
       }
+    }
+
+    // ─── TIKTOK SESSION (cookie per-server) ───
+    async function saveTikTokSession() {
+      const sessionid = document.getElementById('tiktokSessionId').value.trim();
+      const ttwid = document.getElementById('tiktokTtwid').value.trim();
+      const statusEl = document.getElementById('tiktokSessionStatus');
+
+      // Ignora i placeholder "••••••••"
+      if (sessionid === '••••••••••••••••' && ttwid === '••••••••••••••••') {
+        showToast('Nessuna modifica ai cookie.', 'info');
+        return;
+      }
+
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = '⏳ Salvataggio...';
+
+      try {
+        const res = await fetch('/dashboard/<%= guild.id %>/save-tiktok-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionid: sessionid === '••••••••••••••••' ? null : (sessionid || null),
+            ttwid: ttwid === '••••••••••••••••' ? null : (ttwid || null),
+          }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          statusEl.style.color = '#34d399';
+          statusEl.textContent = '✅ Cookie salvati! TikTok userà le tue credenziali per questo server.';
+          showToast('Cookie TikTok salvati!', 'success');
+        } else {
+          statusEl.style.color = '#f87171';
+          statusEl.textContent = '❌ ' + (json.error || 'Errore');
+        }
+      } catch (e) {
+        statusEl.style.color = '#f87171';
+        statusEl.textContent = '❌ Errore di rete.';
+      }
+      setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+    }
+
+    async function clearTikTokSession() {
+      if (!confirm('Rimuovere i cookie TikTok di questo server? Verrà usato il cookie globale del bot.')) return;
+      const statusEl = document.getElementById('tiktokSessionStatus');
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = '⏳ Rimozione...';
+      try {
+        const res = await fetch('/dashboard/<%= guild.id %>/save-tiktok-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionid: null, ttwid: null }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          statusEl.style.color = '#34d399';
+          statusEl.textContent = '✅ Cookie rimossi. Uso cookie globali del bot.';
+          document.getElementById('tiktokSessionId').value = '';
+          document.getElementById('tiktokTtwid').value = '';
+          showToast('Cookie TikTok rimossi.', 'success');
+        }
+      } catch (e) {
+        statusEl.style.color = '#f87171';
+        statusEl.textContent = '❌ Errore di rete.';
+      }
+      setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
     }
 
     // ─── TAG INPUT (parole bannate) ───

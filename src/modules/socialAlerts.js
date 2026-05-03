@@ -120,7 +120,8 @@ async function checkTwitch(client) {
 let _tiktokRunning = false;
 
 // Carica la pagina profilo con browser fresco (come test-puppeteer.js che funziona)
-async function getLatestTikTokVideo(username) {
+// guildSession = { sessionid, ttwid } — cookie specifici del guild, fallback alle env globali
+async function getLatestTikTokVideo(username, guildSession = {}) {
     logger.info(`TikTok: avvio browser per @${username}...`);
     const browser = await launchBrowser();
     const page = await browser.newPage();
@@ -128,9 +129,12 @@ async function getLatestTikTokVideo(username) {
         await page.setViewport({ width: 1920, height: 1080 });
         await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
 
+        // Cookie: priorità guild-specific → fallback globali .env
+        const sessionid = guildSession.sessionid || process.env.TIKTOK_SESSIONID;
+        const ttwid = guildSession.ttwid || process.env.TIKTOK_TTWID;
         const cookies = [];
-        if (process.env.TIKTOK_SESSIONID) cookies.push({ name: 'sessionid', value: process.env.TIKTOK_SESSIONID, domain: '.tiktok.com', path: '/' });
-        if (process.env.TIKTOK_TTWID) cookies.push({ name: 'ttwid', value: process.env.TIKTOK_TTWID, domain: '.tiktok.com', path: '/' });
+        if (sessionid) cookies.push({ name: 'sessionid', value: sessionid, domain: '.tiktok.com', path: '/' });
+        if (ttwid) cookies.push({ name: 'ttwid', value: ttwid, domain: '.tiktok.com', path: '/' });
         if (cookies.length) await page.setCookie(...cookies);
 
         // Intercetta XHR item_list (identico a test-puppeteer.js che funziona)
@@ -191,82 +195,85 @@ async function checkTikTok(client) {
     if (_tiktokRunning) return; // evita check sovrapposti
     _tiktokRunning = true;
     try {
-    const guilds = await Guild.findAll();
+        const guilds = await Guild.findAll();
 
-    for (const guildRecord of guilds) {
-        const alerts = guildRecord.tiktokAlerts;
-        if (!alerts?.channelId || !alerts.users?.length) continue;
+        for (const guildRecord of guilds) {
+            const alerts = guildRecord.tiktokAlerts;
+            if (!alerts?.channelId || !alerts.users?.length) continue;
 
-        const channel = await client.channels.fetch(alerts.channelId).catch(() => null);
-        if (!channel) {
-            logger.warn(`TikTok: canale ${alerts.channelId} non trovato per guild ${guildRecord.guildId}`);
-            continue;
-        }
+            const channel = await client.channels.fetch(alerts.channelId).catch(() => null);
+            if (!channel) {
+                logger.warn(`TikTok: canale ${alerts.channelId} non trovato per guild ${guildRecord.guildId}`);
+                continue;
+            }
 
-        let dirty = false;
-        for (let i = 0; i < alerts.users.length; i++) {
-            const user = alerts.users[i];
-            try {
-                const video = await getLatestTikTokVideo(user.name);
-                if (!video) continue;
+            // Cookie specifici del guild (inseriti dall'admin nella dashboard)
+            const guildSession = guildRecord.tiktokSession || {};
 
-                // Salva il secUid estratto dalla pagina (una tantum)
-                if (!user.secUid && video.secUid) {
-                    alerts.users[i].secUid = video.secUid;
+            let dirty = false;
+            for (let i = 0; i < alerts.users.length; i++) {
+                const user = alerts.users[i];
+                try {
+                    const video = await getLatestTikTokVideo(user.name, guildSession);
+                    if (!video) continue;
+
+                    // Salva il secUid estratto dalla pagina (una tantum)
+                    if (!user.secUid && video.secUid) {
+                        alerts.users[i].secUid = video.secUid;
+                        dirty = true;
+                    }
+
+                    if (video.id === user.lastPostId) continue;
+
+                    const videoUrl = `https://www.tiktok.com/@${user.name}/video/${video.id}`;
+
+                    // Valida URL (Discord rifiuta URL non-http/https o con caratteri non validi)
+                    const isValidUrl = (u) => { try { const p = new URL(u); return p.protocol === 'https:' || p.protocol === 'http:'; } catch { return false; } };
+                    const safeAvatar = video.avatar && isValidUrl(video.avatar) ? video.avatar : undefined;
+                    const safeCover = video.cover && isValidUrl(video.cover) ? video.cover : null;
+                    const safeDesc = (video.desc || '').slice(0, 4096);
+
+                    const embed = new EmbedBuilder()
+                        .setColor(0x010101)
+                        .setAuthor({ name: (video.author || user.name).slice(0, 256), iconURL: safeAvatar })
+                        .setTitle(`🎵 Nuovo video TikTok da @${user.name}`.slice(0, 256))
+                        .setURL(videoUrl)
+                        .addFields(
+                            { name: '❤️ Like', value: video.likes.toLocaleString('it'), inline: true },
+                            { name: '▶️ Visualizzazioni', value: video.views.toLocaleString('it'), inline: true },
+                        )
+                        .setTimestamp();
+                    if (safeDesc) embed.setDescription(safeDesc);
+                    if (safeCover) embed.setImage(safeCover);
+
+                    await channel.send({ content: `📲 **@${user.name}** ha pubblicato un nuovo video su TikTok!`, embeds: [embed] });
+                    logger.info(`TikTok: notifica inviata per @${user.name} (video ${video.id})`);
+
+                    // Aggiorna lastPostId solo DOPO invio riuscito + salva metadati per dashboard
+                    alerts.users[i].lastPostId = video.id;
+                    alerts.users[i].lastPost = {
+                        id: video.id,
+                        desc: video.desc || '',
+                        cover: safeCover,
+                        url: videoUrl,
+                        likes: video.likes,
+                        views: video.views,
+                        timestamp: new Date().toISOString(),
+                    };
                     dirty = true;
+                } catch (e) {
+                    // Logga errori dettagliati (AggregateError di discord.js ha .errors)
+                    const detail = e.errors ? JSON.stringify(e.errors) : e.stack || e.message;
+                    logger.warn(`TikTok check error (@${user.name}): ${e.message} — ${detail}`);
                 }
+            }
 
-                if (video.id === user.lastPostId) continue;
-
-                const videoUrl = `https://www.tiktok.com/@${user.name}/video/${video.id}`;
-
-                // Valida URL (Discord rifiuta URL non-http/https o con caratteri non validi)
-                const isValidUrl = (u) => { try { const p = new URL(u); return p.protocol === 'https:' || p.protocol === 'http:'; } catch { return false; } };
-                const safeAvatar = video.avatar && isValidUrl(video.avatar) ? video.avatar : undefined;
-                const safeCover  = video.cover  && isValidUrl(video.cover)  ? video.cover  : null;
-                const safeDesc   = (video.desc || '').slice(0, 4096);
-
-                const embed = new EmbedBuilder()
-                    .setColor(0x010101)
-                    .setAuthor({ name: (video.author || user.name).slice(0, 256), iconURL: safeAvatar })
-                    .setTitle(`🎵 Nuovo video TikTok da @${user.name}`.slice(0, 256))
-                    .setURL(videoUrl)
-                    .addFields(
-                        { name: '❤️ Like', value: video.likes.toLocaleString('it'), inline: true },
-                        { name: '▶️ Visualizzazioni', value: video.views.toLocaleString('it'), inline: true },
-                    )
-                    .setTimestamp();
-                if (safeDesc) embed.setDescription(safeDesc);
-                if (safeCover) embed.setImage(safeCover);
-
-                await channel.send({ content: `📲 **@${user.name}** ha pubblicato un nuovo video su TikTok!`, embeds: [embed] });
-                logger.info(`TikTok: notifica inviata per @${user.name} (video ${video.id})`);
-
-                // Aggiorna lastPostId solo DOPO invio riuscito + salva metadati per dashboard
-                alerts.users[i].lastPostId = video.id;
-                alerts.users[i].lastPost = {
-                    id: video.id,
-                    desc: video.desc || '',
-                    cover: safeCover,
-                    url: videoUrl,
-                    likes: video.likes,
-                    views: video.views,
-                    timestamp: new Date().toISOString(),
-                };
-                dirty = true;
-            } catch (e) {
-                // Logga errori dettagliati (AggregateError di discord.js ha .errors)
-                const detail = e.errors ? JSON.stringify(e.errors) : e.stack || e.message;
-                logger.warn(`TikTok check error (@${user.name}): ${e.message} — ${detail}`);
+            if (dirty) {
+                guildRecord.tiktokAlerts = alerts;
+                guildRecord.changed('tiktokAlerts', true);
+                await guildRecord.save();
             }
         }
-
-        if (dirty) {
-            guildRecord.tiktokAlerts = alerts;
-            guildRecord.changed('tiktokAlerts', true);
-            await guildRecord.save();
-        }
-    }
     } finally {
         _tiktokRunning = false;
     }
