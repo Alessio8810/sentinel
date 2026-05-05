@@ -293,13 +293,18 @@ async function getLatestTikTokVideoPuppeteer(username, guildSession = {}) {
         });
 
         await page.goto(`https://www.tiktok.com/@${username}`, {
-            waitUntil: 'networkidle0',
+            waitUntil: 'domcontentloaded',
             timeout: 45000,
         }).catch(() => { });
 
-        await new Promise(r => setTimeout(r, 5000));
+        await new Promise(r => setTimeout(r, 8000));
 
-        // Fallback: estrai dati direttamente dal JSON embedded nell'HTML della pagina
+        // Diagnostica: mostra cosa ha caricato il browser per capire se è captcha/login wall
+        const pageTitle = await page.title().catch(() => 'unknown');
+        const pageUrl = page.url();
+        logger.info(`TikTok puppeteer: @${username} — title: "${pageTitle}" | url: ${pageUrl}`);
+
+        // Estrai dati dal JSON embedded nell'HTML della pagina
         const pageResult = await page.evaluate(() => {
             try {
                 const el = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
@@ -316,13 +321,30 @@ async function getLatestTikTokVideoPuppeteer(username, guildSession = {}) {
             } catch { return null; }
         });
 
-        // Usa videoList dalla rete se disponibile, altrimenti prova HTML
+        // Scansione del sorgente HTML grezzo come ultima risorsa
+        // I video TikTok hanno ID da 19 cifre, cerca la struttura "id":"NNNNN","desc":
+        let htmlRawVideo = null;
+        if (!videoList && !pageResult?.video) {
+            const html = await page.content().catch(() => '');
+            const match = html.match(/"id"\s*:\s*"(\d{17,20})"\s*,\s*"desc"\s*:\s*"([^"]*)"/);
+            if (match) {
+                htmlRawVideo = { id: match[1], desc: match[2] };
+                logger.info(`TikTok puppeteer: trovato video dall'HTML sorgente per @${username}: ${match[1]}`);
+            }
+        }
+
+        // Usa videoList dalla rete se disponibile, altrimenti HTML rehydration, altrimenti HTML raw
         const videoSource = videoList?.[0] ?? null;
-        const htmlVideo = pageResult?.video ?? null;
+        const htmlVideo = pageResult?.video ?? htmlRawVideo ?? null;
         const pageData = pageResult?.user ?? null;
 
         if (!videoSource && !htmlVideo) {
-            logger.warn(`TikTok puppeteer: nessun video trovato per @${username}`);
+            const hasCookies = !!(guildSession.sessionid || guildSession.ttwid || process.env.TIKTOK_SESSIONID);
+            if (!hasCookies) {
+                logger.warn(`TikTok puppeteer: nessun video per @${username}. TikTok blocca gli IP cloud senza autenticazione. Imposta TIKTOK_SESSIONID nelle variabili d'ambiente di Railway.`);
+            } else {
+                logger.warn(`TikTok puppeteer: nessun video trovato per @${username} (cookie presenti — verifica che siano validi)`);
+            }
             return null;
         }
 
@@ -572,7 +594,7 @@ async function checkYoutube(client) {
                 if (descrizione) embed.setDescription(descrizione);
 
                 await discordChannel.send({
-                    content: `📺 **${channelName}** ha caricato un nuovo video su YouTube!`,
+                    content: `📺 @everyone **${channelName}** ha caricato un nuovo video su YouTube!`,
                     embeds: [embed],
                 });
                 logger.info(`YouTube: notifica inviata per "${channelName}" (video ${videoId})`);
