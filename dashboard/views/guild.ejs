@@ -2079,6 +2079,7 @@
     async function subscribeYoutube() {
       if (!youtubeFoundChannel) return;
       const { channelId, name } = youtubeFoundChannel;
+      const discordChannelId = document.getElementById('youtubeChannel').value || null;
 
       const btn = document.getElementById('youtubeSubscribeBtn');
       btn.disabled = true;
@@ -2088,7 +2089,7 @@
         const resp = await fetch(`/api/${GUILD_ID}/youtube/subscribe`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ channelId, nome: name }),
+          body: JSON.stringify({ channelId, nome: name, discordChannelId }),
         });
         const data = await resp.json();
 

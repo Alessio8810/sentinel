@@ -403,6 +403,7 @@ app.post('/api/:guildId/youtube/subscribe', ensureAuth, async (req, res) => {
 
   const channelId = (req.body.channelId || '').trim();
   const nome = (req.body.nome || '').trim();
+  const discordChannelId = (req.body.discordChannelId || '').trim() || null;
   if (!channelId || !nome) return res.status(400).json({ error: 'channelId e nome richiesti.' });
 
   // Validazione base: deve iniziare con UC
@@ -414,6 +415,8 @@ app.post('/api/:guildId/youtube/subscribe', ensureAuth, async (req, res) => {
     const [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
     const raw = config.youtubeAlerts || {};
     const alerts = { channelId: raw.channelId ?? null, channels: Array.isArray(raw.channels) ? raw.channels : [] };
+    // Aggiorna channelId Discord se fornito dalla dashboard
+    if (discordChannelId) alerts.channelId = discordChannelId;
     if (!alerts.channels.find(c => c.channelId === channelId)) {
       alerts.channels.push({ channelId, name: nome, lastVideoId: null });
       config.youtubeAlerts = alerts;

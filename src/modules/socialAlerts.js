@@ -397,11 +397,19 @@ async function checkYoutube(client) {
     const guilds = await Guild.findAll();
 
     for (const guildRecord of guilds) {
-        const alerts = guildRecord.youtubeAlerts;
-        if (!alerts?.channelId || !alerts.channels?.length) continue;
+        const raw = guildRecord.youtubeAlerts;
+        if (!raw) continue;
+        const alerts = {
+            channelId: raw.channelId ?? null,
+            channels: Array.isArray(raw.channels) ? raw.channels : [],
+        };
+        if (!alerts.channelId || !alerts.channels.length) continue;
 
         const discordChannel = await client.channels.fetch(alerts.channelId).catch(() => null);
-        if (!discordChannel) continue;
+        if (!discordChannel) {
+            logger.warn(`YouTube: canale Discord ${alerts.channelId} non trovato per guild ${guildRecord.guildId}`);
+            continue;
+        }
 
         let dirty = false;
         for (let i = 0; i < alerts.channels.length; i++) {
@@ -410,14 +418,20 @@ async function checkYoutube(client) {
                 const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${yt.channelId}`;
                 const feed = await youtubeRssParser.parseURL(feedUrl);
                 const latest = feed.items?.[0];
-                if (!latest) continue;
+                if (!latest) {
+                    logger.warn(`YouTube: feed vuoto per ${yt.channelId}`);
+                    continue;
+                }
 
                 // Estrai l'ID del video dal campo custom o dall'URL
                 const videoId = latest.ytVideoId
                     || latest.link?.match(/[?&]v=([^&]+)/)?.[1]
                     || latest.id?.match(/video:([^:]+)$/)?.[1];
 
-                if (!videoId || videoId === yt.lastVideoId) continue;
+                logger.info(`YouTube: check "${yt.name}" — ultimo video: ${videoId} | salvato: ${yt.lastVideoId}`);
+
+                if (!videoId) continue;
+                if (videoId === yt.lastVideoId) continue;
 
                 // Thumbnail sempre disponibile per video pubblici
                 const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
