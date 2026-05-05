@@ -132,9 +132,14 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        try {
         const sub = interaction.options.getSubcommand();
         const [config] = await Guild.findOrCreate({ where: { guildId: interaction.guild.id } });
-        const alerts = config.youtubeAlerts || { channelId: null, channels: [] };
+        const raw = config.youtubeAlerts || {};
+        const alerts = {
+            channelId: raw.channelId ?? null,
+            channels: Array.isArray(raw.channels) ? raw.channels : [],
+        };
 
         if (sub === 'add') {
             await interaction.deferReply({ ephemeral: true });
@@ -203,6 +208,14 @@ module.exports = {
             config.changed('youtubeAlerts', true);
             await config.save();
             return interaction.reply({ content: `✅ Canale notifiche YouTube impostato su ${discordCanale}`, ephemeral: true });
+        }
+        } catch (e) {
+            const risposta = { content: `❌ Errore interno: ${e.message}`, ephemeral: true };
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply(risposta).catch(() => {});
+            } else {
+                await interaction.reply(risposta).catch(() => {});
+            }
         }
     },
 };
