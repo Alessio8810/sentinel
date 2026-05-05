@@ -135,6 +135,10 @@ const RSSHUB_INSTANCES = [
     'https://rsshub.app',
     'https://rsshub.rssforever.com',
     'https://hub.slarky.com',
+    'https://rsshub.ktachibana.party',
+    'https://rsshub.openflights.org',
+    'https://rsshub.wkfg.me',
+    'https://rsshub.cming.me',
 ];
 
 // Strategia 1: RSS via RSSHub — zero configurazione, funziona per tutti
@@ -176,7 +180,43 @@ async function getLatestTikTokVideoViaRSS(username) {
     return null;
 }
 
-// Strategia 2: Puppeteer (fallback) — usa cookie globali bot o quelli del guild
+// Strategia 2: tikwm.com (API non ufficiale dedicata TikTok, zero auth, più stabile di RSSHub)
+async function getLatestTikTokVideoViaTikwm(username) {
+    try {
+        const clean = username.replace(/^@/, '');
+        const url = `https://www.tikwm.com/api/user/posts?unique_id=@${clean}&count=1&cursor=0`;
+        const { data } = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Referer': 'https://www.tikwm.com/',
+            },
+            timeout: 15000,
+        });
+        if (data?.code !== 0 || !data?.data?.videos?.length) {
+            logger.warn(`TikTok tikwm: risposta non valida per @${username} (code=${data?.code})`);
+            return null;
+        }
+        const v = data.data.videos[0];
+        const videoId = String(v.video_id || v.id || '');
+        if (!videoId) return null;
+        logger.info(`TikTok tikwm: trovato video ${videoId} per @${username}`);
+        return {
+            id: videoId,
+            desc: v.title || '',
+            cover: v.cover || v.origin_cover || null,
+            author: v.author?.nickname || clean,
+            avatar: v.author?.avatar || null,
+            likes: v.digg_count || 0,
+            views: v.play_count || 0,
+            url: `https://www.tiktok.com/@${clean}/video/${videoId}`,
+        };
+    } catch (e) {
+        logger.warn(`TikTok tikwm: fallito per @${username}: ${e.message}`);
+        return null;
+    }
+}
+
+// Strategia 3: Puppeteer (fallback) — usa cookie globali bot o quelli del guild
 // guildSession = { sessionid, ttwid } — opzionale, per server che vogliono più affidabilità
 async function getLatestTikTokVideoPuppeteer(username, guildSession = {}) {
     logger.info(`TikTok puppeteer: avvio browser per @${username}...`);
@@ -243,14 +283,17 @@ async function getLatestTikTokVideoPuppeteer(username, guildSession = {}) {
     }
 }
 
-// Entry point: prova RSS → fallback puppeteer
+// Entry point: prova RSS → tikwm → puppeteer
 async function getLatestTikTokVideo(username, guildSession = {}) {
     // Se il guild ha cookie propri, vai direttamente a puppeteer (più affidabile con auth)
     const hasGuildCookies = guildSession.sessionid || guildSession.ttwid;
     if (!hasGuildCookies) {
         const rssResult = await getLatestTikTokVideoViaRSS(username);
         if (rssResult) return rssResult;
-        logger.info(`TikTok: RSS fallito per @${username}, provo puppeteer fallback...`);
+        logger.info(`TikTok: RSS fallito per @${username}, provo tikwm...`);
+        const tikwmResult = await getLatestTikTokVideoViaTikwm(username);
+        if (tikwmResult) return tikwmResult;
+        logger.info(`TikTok: tikwm fallito per @${username}, provo puppeteer fallback...`);
     }
     return getLatestTikTokVideoPuppeteer(username, guildSession);
 }
