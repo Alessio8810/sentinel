@@ -52,35 +52,40 @@ async function risolviHandleTramiteApi(handle) {
 }
 
 async function risolviHandleTramiteScraping(handle) {
-    const paginaUrl = `https://www.youtube.com/${handle}`;
+    const rawHandle = handle.replace(/^@/, '');
+    const paginaUrl = `https://www.youtube.com/@${rawHandle}`;
     const { data: html } = await axios.get(paginaUrl, {
         headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
         },
-        timeout: 10000,
+        timeout: 12000,
     });
 
-    // YouTube include il canonical link con il channel ID nella pagina
-    const matchCanonical = html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[\w-]{22})"/i);
-    if (matchCanonical) {
-        const channelId = matchCanonical[1];
-        // Estrai il nome del canale dal titolo della pagina
-        const matchTitolo = html.match(/<title>([^<]+)<\/title>/i);
-        const nome = matchTitolo ? matchTitolo[1].replace(/ - YouTube$/, '').trim() : handle;
-        return { channelId, name: nome };
+    const patternsChannelId = [
+        /"channelId":"(UC[\w-]{22})"/,
+        /"externalId":"(UC[\w-]{22})"/,
+        /channel\/(UC[\w-]{22})/,
+        /<meta itemprop="channelId" content="(UC[\w-]{22})"/i,
+    ];
+
+    let channelId = null;
+    for (const pattern of patternsChannelId) {
+        const m = html.match(pattern);
+        if (m) { channelId = m[1]; break; }
     }
 
-    // Fallback: cerca channelId nel JSON inline della pagina
-    const matchJson = html.match(/"channelId":"(UC[\w-]{22})"/);
-    if (matchJson) {
-        const channelId = matchJson[1];
-        const matchNome = html.match(/"author":\{"simpleText":"([^"]+)"\}/) || html.match(/<title>([^<]+)<\/title>/i);
-        const nome = matchNome ? matchNome[1].replace(/ - YouTube$/, '').trim() : handle;
-        return { channelId, name: nome };
+    if (!channelId) {
+        throw new Error(`Impossibile risolvere il canale YouTube "${handle}". Prova a fornire il Channel ID direttamente (formato: UC...).`);
     }
 
-    throw new Error(`Impossibile risolvere il canale YouTube "${handle}". Prova a fornire il Channel ID direttamente (formato: UC...).`);
+    let nome = rawHandle;
+    const matchNome = html.match(/"author":\{"simpleText":"([^"]+)"\}/)
+        || html.match(/"ownerText":\{"runs":\[?\{"text":"([^"]+)"/)
+        || html.match(/<title>([^<]+)<\/title>/i);
+    if (matchNome) nome = matchNome[1].replace(/ - YouTube$/i, '').trim();
+
+    return { channelId, name: nome };
 }
 
 // ── Comando slash /youtube ────────────────────────────────────────────────────

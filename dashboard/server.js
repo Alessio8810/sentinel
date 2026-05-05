@@ -308,7 +308,7 @@ app.get('/api/:guildId/youtube/resolve', ensureAuth, async (req, res) => {
   if (!input) return res.status(400).json({ error: 'Input richiesto.' });
 
   try {
-    // Estrai channelId da URL /channel/UC...
+    // Caso 1: URL con /channel/UC...
     const matchChannel = input.match(/youtube\.com\/channel\/(UC[\w-]{22})/i);
     if (matchChannel) {
       const channelId = matchChannel[1];
@@ -316,21 +316,22 @@ app.get('/api/:guildId/youtube/resolve', ensureAuth, async (req, res) => {
       return res.json({ channelId, name: nome });
     }
 
-    // ID diretto UCxxxxxxxxxxxxxxxxxxxxxxxx
+    // Caso 2: ID diretto UC...
     if (/^UC[\w-]{22}$/.test(input)) {
       const nome = await risolviNomeCanaleYT(input);
       return res.json({ channelId: input, name: nome });
     }
 
-    // Handle: @nome oppure URL youtube.com/@nome
-    const matchHandle = input.match(/youtube\.com\/@([\w.-]+)/i);
-    const handle = matchHandle ? `@${matchHandle[1]}` : (input.startsWith('@') ? input : `@${input}`);
+    // Caso 3: handle @nome oppure URL youtube.com/@nome o youtube.com/c/nome o youtube.com/user/nome
+    const matchHandle = input.match(/youtube\.com\/(?:@|c\/|user\/)([\w.-]+)/i);
+    const rawHandle = matchHandle ? matchHandle[1] : input.replace(/^@/, '');
+    const handleUrl = `https://www.youtube.com/@${rawHandle}`;
 
-    // Prova via YouTube Data API v3 se disponibile
+    // Tenta via YouTube Data API v3 se disponibile
     if (process.env.YOUTUBE_API_KEY) {
       try {
         const { data } = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
-          params: { key: process.env.YOUTUBE_API_KEY, forHandle: handle, part: 'id,snippet' },
+          params: { key: process.env.YOUTUBE_API_KEY, forHandle: `@${rawHandle}`, part: 'id,snippet' },
           timeout: 8000,
         });
         const item = data.items?.[0];
@@ -338,20 +339,41 @@ app.get('/api/:guildId/youtube/resolve', ensureAuth, async (req, res) => {
       } catch { /* fallback scraping */ }
     }
 
-    // Fallback: scraping del canonical link
-    const paginaUrl = `https://www.youtube.com/${handle}`;
-    const { data: html } = await axios.get(paginaUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en-US,en;q=0.9' },
-      timeout: 10000,
+    // Fallback: scarica la pagina e cerca il channelId con pattern multipli
+    const { data: html } = await axios.get(handleUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      timeout: 12000,
     });
-    const matchCanonical = html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[\w-]{22})"/i);
-    if (matchCanonical) {
-      const channelId = matchCanonical[1];
-      const matchTitle = html.match(/<title>([^<]+)<\/title>/i);
-      const nome = matchTitle ? matchTitle[1].replace(/ - YouTube$/, '').trim() : handle;
-      return res.json({ channelId, name: nome });
+
+    // Pattern multipli per estrarre il channelId dal JSON inline della pagina
+    const patternsChannelId = [
+      /"channelId":"(UC[\w-]{22})"/,
+      /"externalId":"(UC[\w-]{22})"/,
+      /channel\/(UC[\w-]{22})/,
+      /<meta itemprop="channelId" content="(UC[\w-]{22})"/i,
+    ];
+
+    let channelId = null;
+    for (const pattern of patternsChannelId) {
+      const m = html.match(pattern);
+      if (m) { channelId = m[1]; break; }
     }
-    return res.status(404).json({ error: 'Canale non trovato. Prova a incollare il Channel ID diretto (UC...).' });
+
+    if (!channelId) {
+      return res.status(404).json({ error: 'Canale non trovato. Prova a incollare il Channel ID diretto (UC...).' });
+    }
+
+    // Estrai nome del canale dal JSON inline o dal titolo pagina
+    let nome = rawHandle;
+    const matchNome = html.match(/"author":\{"simpleText":"([^"]+)"\}/)
+      || html.match(/"ownerText":\{"runs":\[?\{"text":"([^"]+)"/)
+      || html.match(/<title>([^<]+)<\/title>/i);
+    if (matchNome) nome = matchNome[1].replace(/ - YouTube$/i, '').trim();
+
+    return res.json({ channelId, name: nome });
   } catch (e) {
     res.status(500).json({ error: 'Errore durante la ricerca: ' + e.message });
   }
