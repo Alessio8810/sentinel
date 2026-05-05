@@ -20,6 +20,7 @@ module.exports = {
           }
         }
       }
+    }
     // Avvia il job per le notifiche della programmazione live
     startScheduleJob(client);
     logger.info('✅ Schedule notifier avviato');
