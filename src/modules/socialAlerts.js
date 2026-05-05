@@ -130,6 +130,16 @@ async function checkTwitch(client) {
 
 let _tiktokRunning = false;
 
+// Istanze ProxiTok — frontend self-hosted dedicato TikTok, espone feed RSS nativi
+const PROXITOK_INSTANCES = [
+    'https://proxitok.pabloferreiro.es',
+    'https://proxitok.pussthecat.org',
+    'https://tok.habedieeh.re',
+    'https://proxitok.privacyfrontend.de',
+    'https://proxitok.lunar.icu',
+    'https://proxitok.pufe.org',
+];
+
 // Istanze pubbliche RSSHub — nessuna configurazione richiesta agli utenti
 const RSSHUB_INSTANCES = [
     'https://rsshub.app',
@@ -141,7 +151,44 @@ const RSSHUB_INSTANCES = [
     'https://rsshub.cming.me',
 ];
 
-// Strategia 1: RSS via RSSHub — zero configurazione, funziona per tutti
+// Strategia 1: RSS via ProxiTok — frontend self-hosted TikTok, più stabile di RSSHub
+async function getLatestTikTokViaProxiTok(username) {
+    const clean = username.replace(/^@/, '');
+    for (const instance of PROXITOK_INSTANCES) {
+        try {
+            const url = `${instance}/@${clean}/rss`;
+            const feed = await rssParser.parseURL(url);
+            if (!feed.items?.length) continue;
+
+            const item = feed.items[0];
+            const videoId = (item.link || item.guid || '').match(/\/video\/(\d+)/)?.[1]
+                         || (item.id || '').match(/\/video\/(\d+)/)?.[1];
+            if (!videoId) continue;
+
+            let cover = null;
+            const content = item['content:encoded'] || item.summary || '';
+            const imgMatch = content.match(/<img[^>]+src="([^"]+)"/i);
+            if (imgMatch) cover = imgMatch[1];
+
+            logger.info(`TikTok ProxiTok [${instance}]: trovato video ${videoId} per @${clean}`);
+            return {
+                id: videoId,
+                desc: item.title || item.contentSnippet || '',
+                cover,
+                author: feed.title?.replace(/[^\w\s@]/g, '').trim() || clean,
+                avatar: null,
+                likes: 0,
+                views: 0,
+                url: item.link || `https://www.tiktok.com/@${clean}/video/${videoId}`,
+            };
+        } catch (e) {
+            logger.warn(`TikTok ProxiTok: ${instance} fallito per @${clean}: ${e.message}`);
+        }
+    }
+    return null;
+}
+
+// Strategia 2: RSS via RSSHub — zero configurazione, funziona per tutti
 async function getLatestTikTokVideoViaRSS(username) {
     for (const instance of RSSHUB_INSTANCES) {
         try {
@@ -252,30 +299,56 @@ async function getLatestTikTokVideoPuppeteer(username, guildSession = {}) {
 
         await new Promise(r => setTimeout(r, 5000));
 
-        if (!videoList?.length) {
-            logger.warn(`TikTok puppeteer: nessun video trovato per @${username}`);
-            return null;
-        }
-
-        const pageData = await page.evaluate(() => {
+        // Fallback: estrai dati direttamente dal JSON embedded nell'HTML della pagina
+        const pageResult = await page.evaluate(() => {
             try {
                 const el = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
                 if (!el) return null;
                 const scope = JSON.parse(el.textContent)?.__DEFAULT_SCOPE__;
                 const user = scope?.['webapp.user-detail']?.userInfo?.user;
-                return user ? { secUid: user.secUid, nickname: user.nickname, avatar: user.avatarMedium } : null;
+                const items = scope?.['webapp.user-detail']?.itemList
+                           || scope?.['webapp.video-list']?.itemList;
+                const v = items?.[0];
+                return {
+                    user: user ? { secUid: user.secUid, nickname: user.nickname, avatar: user.avatarMedium } : null,
+                    video: v ? { id: v.id, desc: v.desc, cover: v.video?.cover || v.video?.originCover, likes: v.stats?.diggCount || 0, views: v.stats?.playCount || 0 } : null,
+                };
             } catch { return null; }
         });
 
-        const v = videoList[0];
+        // Usa videoList dalla rete se disponibile, altrimenti prova HTML
+        const videoSource = videoList?.[0] ?? null;
+        const htmlVideo = pageResult?.video ?? null;
+        const pageData = pageResult?.user ?? null;
+
+        if (!videoSource && !htmlVideo) {
+            logger.warn(`TikTok puppeteer: nessun video trovato per @${username}`);
+            return null;
+        }
+
+        if (videoSource) {
+            return {
+                id: videoSource.id,
+                desc: videoSource.desc || '',
+                cover: videoSource.video?.cover || videoSource.video?.originCover || null,
+                author: pageData?.nickname || videoSource.author?.nickname || username,
+                avatar: pageData?.avatar || videoSource.author?.avatarMedium || null,
+                likes: videoSource.stats?.diggCount || 0,
+                views: videoSource.stats?.playCount || 0,
+                secUid: pageData?.secUid || null,
+            };
+        }
+
+        // Fallback HTML
+        logger.info(`TikTok puppeteer: dati da HTML page per @${username} (video ${htmlVideo.id})`);
         return {
-            id: v.id,
-            desc: v.desc || '',
-            cover: v.video?.cover || v.video?.originCover || null,
-            author: pageData?.nickname || v.author?.nickname || username,
-            avatar: pageData?.avatar || v.author?.avatarMedium || null,
-            likes: v.stats?.diggCount || 0,
-            views: v.stats?.playCount || 0,
+            id: htmlVideo.id,
+            desc: htmlVideo.desc || '',
+            cover: htmlVideo.cover || null,
+            author: pageData?.nickname || username,
+            avatar: pageData?.avatar || null,
+            likes: htmlVideo.likes,
+            views: htmlVideo.views,
             secUid: pageData?.secUid || null,
         };
     } finally {
@@ -283,14 +356,19 @@ async function getLatestTikTokVideoPuppeteer(username, guildSession = {}) {
     }
 }
 
-// Entry point: prova RSS → tikwm → puppeteer
+// Entry point: ProxiTok → RSSHub → tikwm → Puppeteer
 async function getLatestTikTokVideo(username, guildSession = {}) {
     // Se il guild ha cookie propri, vai direttamente a puppeteer (più affidabile con auth)
     const hasGuildCookies = guildSession.sessionid || guildSession.ttwid;
     if (!hasGuildCookies) {
+        const proxitokResult = await getLatestTikTokViaProxiTok(username);
+        if (proxitokResult) return proxitokResult;
+        logger.info(`TikTok: ProxiTok fallito per @${username}, provo RSSHub...`);
+
         const rssResult = await getLatestTikTokVideoViaRSS(username);
         if (rssResult) return rssResult;
-        logger.info(`TikTok: RSS fallito per @${username}, provo tikwm...`);
+        logger.info(`TikTok: RSSHub fallito per @${username}, provo tikwm...`);
+
         const tikwmResult = await getLatestTikTokVideoViaTikwm(username);
         if (tikwmResult) return tikwmResult;
         logger.info(`TikTok: tikwm fallito per @${username}, provo puppeteer fallback...`);
