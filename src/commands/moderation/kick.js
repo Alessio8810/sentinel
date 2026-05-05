@@ -8,7 +8,9 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
     .addUserOption(o => o.setName('utente').setDescription('Utente da espellere').setRequired(true))
     .addStringOption(o => o.setName('motivo').setDescription('Motivo')),
-  cooldown: 5,\n    await interaction.deferReply();
+  cooldown: 5,
+  async execute(interaction) {
+    await interaction.deferReply();
     const target = interaction.options.getMember('utente');
     const reason = interaction.options.getString('motivo') || 'Nessuna ragione specificata';
 

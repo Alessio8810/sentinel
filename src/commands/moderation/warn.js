@@ -11,7 +11,9 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
     .addUserOption(o => o.setName('utente').setDescription('Utente da avvertire').setRequired(true))
     .addStringOption(o => o.setName('motivo').setDescription('Motivo').setRequired(true)),
-  cooldown: 3,\n    await interaction.deferReply();
+  cooldown: 3,
+  async execute(interaction) {
+    await interaction.deferReply();
     const target = interaction.options.getMember('utente');
     const reason = interaction.options.getString('motivo');
 
