@@ -15,7 +15,13 @@ async function loadCommands(client) {
 
     const files = fs.readdirSync(categoryPath).filter(f => f.endsWith('.js'));
     for (const file of files) {
-      const command = require(path.join(categoryPath, file));
+      let command;
+      try {
+        command = require(path.join(categoryPath, file));
+      } catch (e) {
+        logger.error(`❌ Errore caricamento comando ${file}: ${e.message}`);
+        continue;
+      }
       if (!command.data || !command.execute) continue;
       client.commands.set(command.data.name, command);
       commandsData.push(command.data.toJSON());
@@ -29,10 +35,11 @@ async function loadCommands(client) {
     logger.info('🔄 Registrazione comandi slash...');
     if (process.env.GUILD_ID) {
       await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), { body: commandsData });
+      logger.info(`✅ ${commandsData.length} comandi slash registrati (guild ${process.env.GUILD_ID}): ${commandsData.map(c => c.name).join(', ')}`);
     } else {
       await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commandsData });
+      logger.info(`✅ ${commandsData.length} comandi slash registrati (GLOBALI — propagazione fino a 1h): ${commandsData.map(c => c.name).join(', ')}`);
     }
-    logger.info(`✅ ${commandsData.length} comandi slash registrati`);
   } catch (err) {
     logger.error('❌ Errore registrazione comandi:', err);
   }
