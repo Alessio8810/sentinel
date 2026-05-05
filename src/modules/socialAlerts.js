@@ -7,6 +7,17 @@ const logger = require('../utils/logger');
 
 const rssParser = new Parser({ timeout: 10000 });
 
+// Parser YouTube configurato per estrarre campi custom (namespace yt: e media:)
+const youtubeRssParser = new Parser({
+    timeout: 10000,
+    customFields: {
+        item: [
+            ['yt:videoId', 'ytVideoId'],
+            ['media:group', 'mediaGroup'],
+        ],
+    },
+});
+
 // ── BROWSER HEADLESS (TikTok anti-bot bypass) ─────────────────────────────────
 
 async function launchBrowser() {
@@ -380,6 +391,72 @@ async function checkInstagram(client) {
     }
 }
 
+// ── YOUTUBE ───────────────────────────────────────────────────────────────────
+
+async function checkYoutube(client) {
+    const guilds = await Guild.findAll();
+
+    for (const guildRecord of guilds) {
+        const alerts = guildRecord.youtubeAlerts;
+        if (!alerts?.channelId || !alerts.channels?.length) continue;
+
+        const discordChannel = await client.channels.fetch(alerts.channelId).catch(() => null);
+        if (!discordChannel) continue;
+
+        let dirty = false;
+        for (let i = 0; i < alerts.channels.length; i++) {
+            const yt = alerts.channels[i];
+            try {
+                const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${yt.channelId}`;
+                const feed = await youtubeRssParser.parseURL(feedUrl);
+                const latest = feed.items?.[0];
+                if (!latest) continue;
+
+                // Estrai l'ID del video dal campo custom o dall'URL
+                const videoId = latest.ytVideoId
+                    || latest.link?.match(/[?&]v=([^&]+)/)?.[1]
+                    || latest.id?.match(/video:([^:]+)$/)?.[1];
+
+                if (!videoId || videoId === yt.lastVideoId) continue;
+
+                // Thumbnail sempre disponibile per video pubblici
+                const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+                const videoUrl = latest.link || `https://www.youtube.com/watch?v=${videoId}`;
+                const channelName = yt.name || feed.title || yt.channelId;
+                const title = (latest.title || '').slice(0, 256);
+                const descrizione = (latest.contentSnippet || latest.mediaGroup?.['media:description']?.[0] || '').slice(0, 1024);
+
+                const embed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setAuthor({ name: channelName.slice(0, 256) })
+                    .setTitle(`▶️ ${title}`)
+                    .setURL(videoUrl)
+                    .setImage(thumbnailUrl)
+                    .setTimestamp(latest.pubDate ? new Date(latest.pubDate) : undefined);
+
+                if (descrizione) embed.setDescription(descrizione);
+
+                await discordChannel.send({
+                    content: `📺 **${channelName}** ha caricato un nuovo video su YouTube!`,
+                    embeds: [embed],
+                });
+                logger.info(`YouTube: notifica inviata per "${channelName}" (video ${videoId})`);
+
+                alerts.channels[i].lastVideoId = videoId;
+                dirty = true;
+            } catch (e) {
+                logger.warn(`YouTube check error (${yt.channelId}): ${e.message}`);
+            }
+        }
+
+        if (dirty) {
+            guildRecord.youtubeAlerts = alerts;
+            guildRecord.changed('youtubeAlerts', true);
+            await guildRecord.save();
+        }
+    }
+}
+
 // ── AVVIO ─────────────────────────────────────────────────────────────────────
 function startSocialAlerts(client) {
     // Twitch ogni 2 minuti
@@ -388,8 +465,10 @@ function startSocialAlerts(client) {
     cron.schedule('*/30 * * * * *', () => checkTikTok(client).catch(() => { }));
     // Instagram ogni 20 minuti (RSS)
     cron.schedule('*/20 * * * *', () => checkInstagram(client).catch(() => { }));
+    // YouTube ogni 10 minuti (RSS feed pubblico)
+    cron.schedule('*/10 * * * *', () => checkYoutube(client).catch(() => { }));
 
-    logger.info('✅ Social Alerts avviato (Twitch ogni 2m · TikTok ogni 30s · Instagram ogni 20m)');
+    logger.info('✅ Social Alerts avviato (Twitch ogni 2m · TikTok ogni 30s · Instagram ogni 20m · YouTube ogni 10m)');
 }
 
 module.exports = { startSocialAlerts };
