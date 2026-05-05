@@ -287,7 +287,13 @@ app.post('/dashboard/:guildId/save-social', ensureAuth, async (req, res) => {
 
   try {
     const [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
-    const current = config[field] || { channelId: null, streamers: [], users: [] };
+    const raw = config[field] || {};
+    const current = {
+      channelId: raw.channelId ?? null,
+      streamers: Array.isArray(raw.streamers) ? raw.streamers : [],
+      users: Array.isArray(raw.users) ? raw.users : [],
+      channels: Array.isArray(raw.channels) ? raw.channels : [],
+    };
     current.channelId = channelId || null;
     config[field] = current;
     config.changed(field, true);
@@ -406,7 +412,8 @@ app.post('/api/:guildId/youtube/subscribe', ensureAuth, async (req, res) => {
 
   try {
     const [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
-    const alerts = config.youtubeAlerts || { channelId: null, channels: [] };
+    const raw = config.youtubeAlerts || {};
+    const alerts = { channelId: raw.channelId ?? null, channels: Array.isArray(raw.channels) ? raw.channels : [] };
     if (!alerts.channels.find(c => c.channelId === channelId)) {
       alerts.channels.push({ channelId, name: nome, lastVideoId: null });
       config.youtubeAlerts = alerts;
@@ -429,14 +436,16 @@ app.delete('/api/:guildId/youtube/subscribe', ensureAuth, async (req, res) => {
 
   try {
     const [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
-    const alerts = config.youtubeAlerts || { channelId: null, channels: [] };
+    const raw = config.youtubeAlerts || {};
+    const alerts = { channelId: raw.channelId ?? null, channels: Array.isArray(raw.channels) ? raw.channels : [] };
     alerts.channels = alerts.channels.filter(c => c.channelId !== channelId);
     config.youtubeAlerts = alerts;
     config.changed('youtubeAlerts', true);
     await config.save();
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: 'Errore interno.' });
+    console.error('YouTube unsubscribe error:', e.message);
+    res.status(500).json({ error: e.message || 'Errore interno.' });
   }
 });
 
