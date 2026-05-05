@@ -807,6 +807,12 @@
           %><span class="status-dot"></span>
           <% } %>
       </a>
+      <a href="#youtube" class="nav-link">
+        <span class="icon"><i class="fa-brands fa-youtube"></i></span> YouTube
+        <% if (config.youtubeAlerts && config.youtubeAlerts.channels && config.youtubeAlerts.channels.length>0) { %><span
+            class="status-dot"></span>
+          <% } %>
+      </a>
       <a href="#liveschedule" class="nav-link">
         <span class="icon"><i class="fa-solid fa-calendar-days"></i></span> Programmazione Live
         <% if ((config.liveSchedule||[]).length>0) { %><span class="status-dot"></span><% } %>
@@ -879,6 +885,9 @@
           { id: 'instagram', brand: true, icon: 'fa-instagram', color: 'rgba(225,48,108,.15)', iconColor: '#e1306c',
           title: 'Instagram', desc: 'Notifiche per i nuovi post degli account Instagram', active:
           !!(config.instagramAlerts && config.instagramAlerts.users && config.instagramAlerts.users.length>0) },
+          { id: 'youtube', brand: true, icon: 'fa-youtube', color: 'rgba(255,0,0,.12)', iconColor: '#ff0000',
+          title: 'YouTube', desc: 'Notifiche per i nuovi video caricati sui canali YouTube', active:
+          !!(config.youtubeAlerts && config.youtubeAlerts.channels && config.youtubeAlerts.channels.length>0) },
           { id: 'customcmds', brand: false, icon: 'fa-terminal', color: 'rgba(52,211,153,.15)', iconColor: '#34d399',
           title: 'Comandi Custom', desc: 'Crea i tuoi comandi slash con risposte personalizzate', active:
           (config.customCommands||[]).length > 0 },
@@ -1609,6 +1618,78 @@
       <div id="instagramStatus" style="margin-top:12px;font-size:0.85rem;display:none;"></div>
     </div>
 
+    <!-- ── YOUTUBE ── -->
+    <div class="card" id="youtube">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(255,0,0,.12);color:#ff0000;"><i class="fa-brands fa-youtube"></i></div>
+        <div class="card-header-text">
+          <h3>Notifiche Video YouTube</h3>
+          <p>Ricevi una notifica quando un canale pubblica un nuovo video su YouTube</p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Canale notifiche</label>
+        <select class="form-input" id="youtubeChannel">
+          <option value="">— Nessuno —</option>
+          <% channels.filter(c => c.type === 0 || c.type === 5).forEach(c => { %>
+            <option value="<%= c.id %>" <%= (config.youtubeAlerts && config.youtubeAlerts.channelId === c.id) ? 'selected' : '' %>># <%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <!-- Campo ricerca canale YouTube -->
+      <div class="form-group">
+        <label class="form-label">Aggiungi canale YouTube</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="youtubeSearchInput" class="form-input"
+            placeholder="Channel ID (UC...) o URL youtube.com/@handle"
+            style="flex:1;" onkeydown="if(event.key==='Enter') searchYoutube()">
+          <button class="btn btn-accent" id="youtubeSearchBtn" onclick="searchYoutube()">
+            <i class="fa-solid fa-magnifying-glass"></i> Cerca
+          </button>
+        </div>
+        <div class="form-hint">Incolla il Channel ID (UCxxxxxxx), l'URL del canale o l'handle (@nomeutente)</div>
+      </div>
+      <!-- Card anteprima canale trovato -->
+      <div id="youtubeProfileCard" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;display:none;align-items:center;gap:12px;">
+        <img id="youtubeProfileThumb" src="" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
+        <div style="flex:1;min-width:0;">
+          <div id="youtubeProfileName" style="font-weight:600;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          <div id="youtubeProfileId" style="color:var(--muted);font-size:0.78rem;font-family:monospace;"></div>
+        </div>
+        <button class="btn btn-accent btn-sm" onclick="subscribeYoutube()" id="youtubeSubscribeBtn">
+          <i class="fa-solid fa-plus"></i> Aggiungi
+        </button>
+      </div>
+      <!-- Lista canali monitorati -->
+      <div class="form-group">
+        <label>Canali monitorati</label>
+        <div id="youtubeChannelList">
+          <% const ytChannels = (config.youtubeAlerts && config.youtubeAlerts.channels) || []; %>
+          <% if (ytChannels.length > 0) { %>
+            <% ytChannels.forEach(c => { %>
+              <div class="list-item" id="yt-row-<%= c.channelId %>">
+                <div>
+                  <div class="list-item-main">▶️ <%= c.name %></div>
+                  <div style="color:var(--muted);font-size:0.75rem;font-family:monospace;"><%= c.channelId %></div>
+                </div>
+                <button class="btn btn-sm" style="background:rgba(248,81,73,.15);color:var(--red);"
+                  onclick="unsubscribeYoutube('<%= c.channelId %>')">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div id="youtubeEmptyState" class="list-empty">
+              <i class="fa-brands fa-youtube"></i>
+              <p>Nessun canale monitorato. Cerca un canale qui sopra per aggiungerlo.</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      <button class="btn btn-accent" onclick="saveSocial('youtube')"><i class="fa-solid fa-floppy-disk"></i> Salva canale</button>
+      <div id="youtubeStatus" style="margin-top:12px;font-size:0.85rem;display:none;"></div>
+    </div>
+
     <!-- ── PROGRAMMAZIONE LIVE ── -->
     <div class="card" id="liveschedule">
       <div class="card-header">
@@ -1732,7 +1813,7 @@
     }
 
     // ─── SIDEBAR ACTIVE ───
-    const sections = ['general', 'welcome', 'levels', 'moderation', 'automod', 'music', 'tickets', 'reactionroles', 'botpersonalization', 'twitch', 'tiktok', 'instagram', 'customcmds'];
+    const sections = ['general', 'welcome', 'levels', 'moderation', 'automod', 'music', 'tickets', 'reactionroles', 'botpersonalization', 'twitch', 'tiktok', 'instagram', 'youtube', 'customcmds'];
     window.addEventListener('scroll', () => {
       let current = sections[0];
       for (const id of sections) {
@@ -1958,6 +2039,118 @@
 
     // Carica al mount della pagina
     loadTikTokPosts();
+
+    // ─── YOUTUBE SEARCH / SUBSCRIBE ───
+    let youtubeFoundChannel = null;
+
+    async function searchYoutube() {
+      const input = document.getElementById('youtubeSearchInput').value.trim();
+      if (!input) return;
+
+      const btn = document.getElementById('youtubeSearchBtn');
+      const card = document.getElementById('youtubeProfileCard');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      card.style.display = 'none';
+      youtubeFoundChannel = null;
+
+      try {
+        const resp = await fetch(`/api/${GUILD_ID}/youtube/resolve?input=${encodeURIComponent(input)}`);
+        const data = await resp.json();
+
+        if (resp.ok && data.channelId) {
+          document.getElementById('youtubeProfileThumb').src = '';
+          document.getElementById('youtubeProfileThumb').style.display = 'none';
+          document.getElementById('youtubeProfileName').textContent = data.name || data.channelId;
+          document.getElementById('youtubeProfileId').textContent = data.channelId;
+          youtubeFoundChannel = data;
+          card.style.display = 'flex';
+        } else {
+          showToast(data.error || 'Canale non trovato', 'error');
+        }
+      } catch (e) {
+        showToast('Errore di rete durante la ricerca', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Cerca';
+      }
+    }
+
+    async function subscribeYoutube() {
+      if (!youtubeFoundChannel) return;
+      const { channelId, name } = youtubeFoundChannel;
+
+      const btn = document.getElementById('youtubeSubscribeBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+      try {
+        const resp = await fetch(`/api/${GUILD_ID}/youtube/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channelId, nome: name }),
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+          const list = document.getElementById('youtubeChannelList');
+          const empty = document.getElementById('youtubeEmptyState');
+          if (empty) empty.remove();
+
+          if (!document.getElementById(`yt-row-${channelId}`)) {
+            const row = document.createElement('div');
+            row.className = 'list-item';
+            row.id = `yt-row-${channelId}`;
+            row.innerHTML = `
+              <div>
+                <div class="list-item-main">▶️ ${name}</div>
+                <div style="color:var(--muted);font-size:0.75rem;font-family:monospace;">${channelId}</div>
+              </div>
+              <button class="btn btn-sm" style="background:rgba(248,81,73,.15);color:var(--red);" onclick="unsubscribeYoutube('${channelId}')">
+                <i class="fa-solid fa-trash"></i>
+              </button>`;
+            list.appendChild(row);
+          }
+
+          document.getElementById('youtubeProfileCard').style.display = 'none';
+          document.getElementById('youtubeSearchInput').value = '';
+          youtubeFoundChannel = null;
+          showToast(`${name} aggiunto!`, 'success');
+        } else {
+          showToast(data.error || 'Errore durante il subscribe', 'error');
+        }
+      } catch (e) {
+        showToast('Errore di rete', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-plus"></i> Aggiungi';
+      }
+    }
+
+    async function unsubscribeYoutube(channelId) {
+      try {
+        const resp = await fetch(`/api/${GUILD_ID}/youtube/subscribe`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channelId }),
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+          const row = document.getElementById(`yt-row-${channelId}`);
+          if (row) row.remove();
+          const list = document.getElementById('youtubeChannelList');
+          if (!list.querySelector('.list-item')) {
+            list.innerHTML = '<div id="youtubeEmptyState" class="list-empty"><i class="fa-brands fa-youtube"></i><p>Nessun canale monitorato.</p></div>';
+          }
+          showToast('Canale rimosso', 'success');
+        } else {
+          showToast(data.error || 'Errore', 'error');
+        }
+      } catch (e) {
+        showToast('Errore di rete', 'error');
+      }
+    }
 
     // ─── SOCIAL ALERTS ───
     async function saveSocial(platform) {

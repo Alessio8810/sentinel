@@ -281,8 +281,7 @@ app.post('/dashboard/:guildId/save-social', ensureAuth, async (req, res) => {
   if (!guild) return res.status(403).json({ error: 'Accesso negato.' });
 
   const { platform, channelId } = req.body;
-  const allowedPlatforms = ['twitchAlerts', 'tiktokAlerts', 'instagramAlerts'];
-  const fieldMap = { twitch: 'twitchAlerts', tiktok: 'tiktokAlerts', instagram: 'instagramAlerts' };
+  const fieldMap = { twitch: 'twitchAlerts', tiktok: 'tiktokAlerts', instagram: 'instagramAlerts', youtube: 'youtubeAlerts' };
   const field = fieldMap[platform];
   if (!field) return res.status(400).json({ error: 'Piattaforma non valida.' });
 
@@ -297,6 +296,124 @@ app.post('/dashboard/:guildId/save-social', ensureAuth, async (req, res) => {
   } catch (e) {
     console.error('POST /save-social errore:', e.message);
     res.status(500).json({ error: 'Errore interno del server.' });
+  }
+});
+
+// ─── YOUTUBE RESOLVE (ricerca canale per dashboard) ───
+app.get('/api/:guildId/youtube/resolve', ensureAuth, async (req, res) => {
+  const guild = req.user.guilds.find(g => g.id === req.params.guildId);
+  if (!guild) return res.status(403).json({ error: 'Accesso negato.' });
+
+  const input = (req.query.input || '').trim();
+  if (!input) return res.status(400).json({ error: 'Input richiesto.' });
+
+  try {
+    // Estrai channelId da URL /channel/UC...
+    const matchChannel = input.match(/youtube\.com\/channel\/(UC[\w-]{22})/i);
+    if (matchChannel) {
+      const channelId = matchChannel[1];
+      const nome = await risolviNomeCanaleYT(channelId);
+      return res.json({ channelId, name: nome });
+    }
+
+    // ID diretto UCxxxxxxxxxxxxxxxxxxxxxxxx
+    if (/^UC[\w-]{22}$/.test(input)) {
+      const nome = await risolviNomeCanaleYT(input);
+      return res.json({ channelId: input, name: nome });
+    }
+
+    // Handle: @nome oppure URL youtube.com/@nome
+    const matchHandle = input.match(/youtube\.com\/@([\w.-]+)/i);
+    const handle = matchHandle ? `@${matchHandle[1]}` : (input.startsWith('@') ? input : `@${input}`);
+
+    // Prova via YouTube Data API v3 se disponibile
+    if (process.env.YOUTUBE_API_KEY) {
+      try {
+        const { data } = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+          params: { key: process.env.YOUTUBE_API_KEY, forHandle: handle, part: 'id,snippet' },
+          timeout: 8000,
+        });
+        const item = data.items?.[0];
+        if (item) return res.json({ channelId: item.id, name: item.snippet.title });
+      } catch { /* fallback scraping */ }
+    }
+
+    // Fallback: scraping del canonical link
+    const paginaUrl = `https://www.youtube.com/${handle}`;
+    const { data: html } = await axios.get(paginaUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en-US,en;q=0.9' },
+      timeout: 10000,
+    });
+    const matchCanonical = html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[\w-]{22})"/i);
+    if (matchCanonical) {
+      const channelId = matchCanonical[1];
+      const matchTitle = html.match(/<title>([^<]+)<\/title>/i);
+      const nome = matchTitle ? matchTitle[1].replace(/ - YouTube$/, '').trim() : handle;
+      return res.json({ channelId, name: nome });
+    }
+    return res.status(404).json({ error: 'Canale non trovato. Prova a incollare il Channel ID diretto (UC...).' });
+  } catch (e) {
+    res.status(500).json({ error: 'Errore durante la ricerca: ' + e.message });
+  }
+});
+
+async function risolviNomeCanaleYT(channelId) {
+  try {
+    const Parser = require('rss-parser');
+    const parser = new Parser({ timeout: 8000 });
+    const feed = await parser.parseURL(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`);
+    return feed.title || channelId;
+  } catch {
+    return channelId;
+  }
+}
+
+// ─── YOUTUBE SUBSCRIBE/UNSUBSCRIBE ───
+app.post('/api/:guildId/youtube/subscribe', ensureAuth, async (req, res) => {
+  const guild = req.user.guilds.find(g => g.id === req.params.guildId);
+  if (!guild) return res.status(403).json({ error: 'Accesso negato.' });
+
+  const channelId = (req.body.channelId || '').trim();
+  const nome = (req.body.nome || '').trim();
+  if (!channelId || !nome) return res.status(400).json({ error: 'channelId e nome richiesti.' });
+
+  // Validazione formato Channel ID YouTube (UCxxxxxxxxxxxxxxxxxxxxxxxx)
+  if (!/^UC[\w-]{22}$/.test(channelId)) {
+    return res.status(400).json({ error: 'Channel ID non valido.' });
+  }
+
+  try {
+    const [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
+    const alerts = config.youtubeAlerts || { channelId: null, channels: [] };
+    if (!alerts.channels.find(c => c.channelId === channelId)) {
+      alerts.channels.push({ channelId, name: nome, lastVideoId: null });
+      config.youtubeAlerts = alerts;
+      config.changed('youtubeAlerts', true);
+      await config.save();
+    }
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Errore interno.' });
+  }
+});
+
+app.delete('/api/:guildId/youtube/subscribe', ensureAuth, async (req, res) => {
+  const guild = req.user.guilds.find(g => g.id === req.params.guildId);
+  if (!guild) return res.status(403).json({ error: 'Accesso negato.' });
+
+  const channelId = (req.body.channelId || '').trim();
+  if (!channelId) return res.status(400).json({ error: 'channelId richiesto.' });
+
+  try {
+    const [config] = await Guild.findOrCreate({ where: { guildId: req.params.guildId } });
+    const alerts = config.youtubeAlerts || { channelId: null, channels: [] };
+    alerts.channels = alerts.channels.filter(c => c.channelId !== channelId);
+    config.youtubeAlerts = alerts;
+    config.changed('youtubeAlerts', true);
+    await config.save();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Errore interno.' });
   }
 });
 
