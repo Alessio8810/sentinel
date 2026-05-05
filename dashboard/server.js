@@ -399,9 +399,9 @@ app.post('/api/:guildId/youtube/subscribe', ensureAuth, async (req, res) => {
   const nome = (req.body.nome || '').trim();
   if (!channelId || !nome) return res.status(400).json({ error: 'channelId e nome richiesti.' });
 
-  // Validazione formato Channel ID YouTube (UCxxxxxxxxxxxxxxxxxxxxxxxx)
-  if (!/^UC[\w-]{22}$/.test(channelId)) {
-    return res.status(400).json({ error: 'Channel ID non valido.' });
+  // Validazione base: deve iniziare con UC
+  if (!channelId.startsWith('UC') || channelId.length < 10) {
+    return res.status(400).json({ error: 'Channel ID non valido (deve iniziare con UC).' });
   }
 
   try {
@@ -415,7 +415,8 @@ app.post('/api/:guildId/youtube/subscribe', ensureAuth, async (req, res) => {
     }
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: 'Errore interno.' });
+    console.error('YouTube subscribe error:', e.message, e.stack);
+    res.status(500).json({ error: e.message || 'Errore interno.' });
   }
 });
 
